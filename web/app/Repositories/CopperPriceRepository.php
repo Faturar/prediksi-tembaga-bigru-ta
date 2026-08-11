@@ -33,6 +33,22 @@ final class CopperPriceRepository
         return $stmt->fetchAll();
     }
 
+    public function find(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM copper_prices WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function findByDate(string $date): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM copper_prices WHERE date = ? LIMIT 1');
+        $stmt->execute([$date]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     public function orderedClosePrices(): array
     {
         return Database::connection()
@@ -49,6 +65,31 @@ final class CopperPriceRepository
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute($row);
         return $stmt->rowCount() === 1 ? 'inserted' : 'updated';
+    }
+
+    public function create(array $row): int
+    {
+        $sql = 'INSERT INTO copper_prices (`date`, open, high, low, close, volume, change_percent, created_at, updated_at)
+                VALUES (:date, :open, :high, :low, :close, :volume, :change_percent, NOW(), NOW())';
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute($row);
+        return (int) Database::connection()->lastInsertId();
+    }
+
+    public function update(int $id, array $row): void
+    {
+        $row['id'] = $id;
+        $sql = 'UPDATE copper_prices
+                SET `date` = :date, open = :open, high = :high, low = :low, close = :close,
+                    volume = :volume, change_percent = :change_percent, updated_at = NOW()
+                WHERE id = :id';
+        Database::connection()->prepare($sql)->execute($row);
+    }
+
+    public function delete(int $id): void
+    {
+        $stmt = Database::connection()->prepare('DELETE FROM copper_prices WHERE id = ?');
+        $stmt->execute([$id]);
     }
 
     public function count(): int

@@ -44,7 +44,7 @@ class TrainResponse(BaseModel):
     train_samples: int
     test_samples: int
     actual_epochs: int
-    best_epoch: int
+    best_epoch: int | None = None
     model_path: str
     scaler_path: str
     metadata_path: str

@@ -25,11 +25,11 @@ Receives model hyperparameters and ordered price points:
 }
 ```
 
-Returns artifact paths, date ranges, sample counts, and original-scale metrics.
+Returns artifact paths, chronological 80:20 date ranges, sample counts, and original-scale MAE/RMSE/MAPE metrics. Training uses one Bidirectional GRU layer, no validation split, and `shuffle=False`.
 
 ## `POST /api/predict`
 
-Receives active model version and the latest close-price window. Returns the predicted close value.
+Receives active model version and the latest close-price window. Returns the predicted close value for the next trading observation. `prediction_date` is `null` unless a real trading calendar is implemented.
 
 ## `GET /api/models/{version}`
 

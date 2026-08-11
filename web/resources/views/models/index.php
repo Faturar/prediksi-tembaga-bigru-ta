@@ -24,7 +24,7 @@
     </div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Version</th><th>Status</th><th>Aktif</th><th>Window</th><th>Epoch</th><th>Trained</th><th>Keterangan</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Version</th><th>Status</th><th>Aktif</th><th>Window</th><th>Units</th><th>Dropout</th><th>Batch</th><th>Epoch</th><th>LR</th><th>Dataset</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>Trained</th><th>Keterangan</th><th>Aksi</th></tr></thead>
             <tbody>
             <?php foreach ($models as $model): ?>
                 <tr>
@@ -32,7 +32,15 @@
                     <td data-label="Status"><?= e($model['status']) ?></td>
                     <td data-label="Aktif"><?= $model['is_active'] ? 'Ya' : '-' ?></td>
                     <td data-label="Window"><?= e($model['window_size']) ?></td>
+                    <td data-label="Units"><?= e($model['units']) ?></td>
+                    <td data-label="Dropout"><?= e($model['dropout']) ?></td>
+                    <td data-label="Batch"><?= e($model['batch_size']) ?></td>
                     <td data-label="Epoch"><?= e($model['actual_epochs'] ?? $model['configured_epochs']) ?></td>
+                    <td data-label="LR"><?= e($model['learning_rate']) ?></td>
+                    <td data-label="Dataset"><?= $model['dataset_start_date'] && $model['dataset_end_date'] ? e($model['dataset_start_date'] . ' - ' . $model['dataset_end_date']) : '-' ?></td>
+                    <td data-label="MAE"><?= e($model['mae'] ?? '-') ?></td>
+                    <td data-label="RMSE"><?= e($model['rmse'] ?? '-') ?></td>
+                    <td data-label="MAPE"><?= isset($model['mape']) ? e($model['mape']) . '%' : '-' ?></td>
                     <td data-label="Trained"><?= e($model['trained_at']) ?></td>
                     <td data-label="Keterangan"><?= $model['status'] === 'failed' ? e($model['error_message'] ?? '-') : '-' ?></td>
                     <td data-label="Aksi">

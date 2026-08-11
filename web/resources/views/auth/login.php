@@ -17,7 +17,7 @@
         <?php if (!empty($error)): ?><p class="alert"><?= e($error) ?></p><?php endif; ?>
         <form method="post" action="/login" class="stack">
             <?= csrf_field() ?>
-            <label>Email <input type="email" name="email" value="admin@example.com" autocomplete="email" required></label>
+            <label>Email <input type="email" name="email" autocomplete="email" required></label>
             <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
             <button type="submit">Masuk</button>
         </form>

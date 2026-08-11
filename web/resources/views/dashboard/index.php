@@ -104,7 +104,7 @@ $chartEnd = !empty($priceLabels) ? end($priceLabels) : null;
         <?php if (empty($predictionValues)): ?>
         <div class="empty-chart">
             <strong>Belum ada prediksi.</strong>
-            <small>Jalankan training model, lalu buat prediksi pertama.</small>
+            <small>Jalankan training model, lalu buat prediksi periode berikutnya.</small>
             <a href="/models">Training Model</a>
         </div>
         <?php else: ?>

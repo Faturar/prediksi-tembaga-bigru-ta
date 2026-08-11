@@ -16,7 +16,13 @@ $formatTanggalIndonesia = function (?string $date, bool $withTime = false): stri
     return $withTime ? $formatted . ' ' . date('H:i', $timestamp) : $formatted;
 };
 
-$renderReportPagination = function (array $pagination, string $activeType): void {
+$filterQuery = http_build_query(array_filter([
+    'start_date' => $filters['start_date'] ?? null,
+    'end_date' => $filters['end_date'] ?? null,
+]));
+$filterSuffix = $filterQuery ? '&' . $filterQuery : '';
+
+$renderReportPagination = function (array $pagination, string $activeType) use ($filterSuffix): void {
     $pageWindowStart = max(1, ($pagination['page'] ?? 1) - 2);
     $pageWindowEnd = min($pagination['total_pages'] ?? 1, ($pagination['page'] ?? 1) + 2);
     $perPage = $pagination['per_page'] ?? 20;
@@ -26,6 +32,8 @@ $renderReportPagination = function (array $pagination, string $activeType): void
         <form method="get">
             <input type="hidden" name="type" value="<?= e($activeType) ?>">
             <input type="hidden" name="page" value="1">
+            <?php if (!empty($_GET['start_date'])): ?><input type="hidden" name="start_date" value="<?= e($_GET['start_date']) ?>"><?php endif; ?>
+            <?php if (!empty($_GET['end_date'])): ?><input type="hidden" name="end_date" value="<?= e($_GET['end_date']) ?>"><?php endif; ?>
             <label>Rows
                 <select name="per_page" onchange="this.form.submit()">
                     <?php foreach (($pagination['allowed_per_page'] ?? [20, 50, 100]) as $size): ?>
@@ -35,19 +43,19 @@ $renderReportPagination = function (array $pagination, string $activeType): void
             </label>
         </form>
         <nav class="table-pagination-nav" aria-label="Pagination laporan">
-            <a class="table-page-button <?= ($pagination['page'] ?? 1) <= 1 ? 'disabled' : '' ?>" href="/reports?type=<?= e($activeType) ?>&page=<?= e(max(1, ($pagination['page'] ?? 1) - 1)) ?>&per_page=<?= e($perPage) ?>">Prev</a>
+            <a class="table-page-button <?= ($pagination['page'] ?? 1) <= 1 ? 'disabled' : '' ?>" href="/reports?type=<?= e($activeType) ?>&page=<?= e(max(1, ($pagination['page'] ?? 1) - 1)) ?>&per_page=<?= e($perPage) ?><?= e($filterSuffix) ?>">Prev</a>
             <?php if ($pageWindowStart > 1): ?>
-                <a class="table-page-button" href="/reports?type=<?= e($activeType) ?>&page=1&per_page=<?= e($perPage) ?>">1</a>
+                <a class="table-page-button" href="/reports?type=<?= e($activeType) ?>&page=1&per_page=<?= e($perPage) ?><?= e($filterSuffix) ?>">1</a>
                 <?php if ($pageWindowStart > 2): ?><span class="table-page-dots">...</span><?php endif; ?>
             <?php endif; ?>
             <?php for ($pageNumber = $pageWindowStart; $pageNumber <= $pageWindowEnd; $pageNumber++): ?>
-                <a class="table-page-button <?= (int) ($pagination['page'] ?? 1) === $pageNumber ? 'active' : '' ?>" href="/reports?type=<?= e($activeType) ?>&page=<?= e($pageNumber) ?>&per_page=<?= e($perPage) ?>"><?= e($pageNumber) ?></a>
+                    <a class="table-page-button <?= (int) ($pagination['page'] ?? 1) === $pageNumber ? 'active' : '' ?>" href="/reports?type=<?= e($activeType) ?>&page=<?= e($pageNumber) ?>&per_page=<?= e($perPage) ?><?= e($filterSuffix) ?>"><?= e($pageNumber) ?></a>
             <?php endfor; ?>
             <?php if ($pageWindowEnd < ($pagination['total_pages'] ?? 1)): ?>
                 <?php if ($pageWindowEnd < ($pagination['total_pages'] ?? 1) - 1): ?><span class="table-page-dots">...</span><?php endif; ?>
-                <a class="table-page-button" href="/reports?type=<?= e($activeType) ?>&page=<?= e($pagination['total_pages'] ?? 1) ?>&per_page=<?= e($perPage) ?>"><?= e($pagination['total_pages'] ?? 1) ?></a>
+                <a class="table-page-button" href="/reports?type=<?= e($activeType) ?>&page=<?= e($pagination['total_pages'] ?? 1) ?>&per_page=<?= e($perPage) ?><?= e($filterSuffix) ?>"><?= e($pagination['total_pages'] ?? 1) ?></a>
             <?php endif; ?>
-            <a class="table-page-button <?= ($pagination['page'] ?? 1) >= ($pagination['total_pages'] ?? 1) ? 'disabled' : '' ?>" href="/reports?type=<?= e($activeType) ?>&page=<?= e(min($pagination['total_pages'] ?? 1, ($pagination['page'] ?? 1) + 1)) ?>&per_page=<?= e($perPage) ?>">Next</a>
+            <a class="table-page-button <?= ($pagination['page'] ?? 1) >= ($pagination['total_pages'] ?? 1) ? 'disabled' : '' ?>" href="/reports?type=<?= e($activeType) ?>&page=<?= e(min($pagination['total_pages'] ?? 1, ($pagination['page'] ?? 1) + 1)) ?>&per_page=<?= e($perPage) ?><?= e($filterSuffix) ?>">Next</a>
         </nav>
     </div>
 <?php
@@ -62,6 +70,16 @@ $renderReportPagination = function (array $pagination, string $activeType): void
     </div>
     <button onclick="window.print()" class="full-width-button">Print Laporan</button>
 </div>
+
+<?php if (in_array($activeType, ['dataset', 'prediction'], true)): ?>
+<form method="get" class="grid-form report-filter-form">
+    <input type="hidden" name="type" value="<?= e($activeType) ?>">
+    <label>Mulai <input type="date" name="start_date" value="<?= e($filters['start_date'] ?? '') ?>"></label>
+    <label>Sampai <input type="date" name="end_date" value="<?= e($filters['end_date'] ?? '') ?>"></label>
+    <button type="submit">Filter</button>
+    <a class="button-secondary" href="/reports?type=<?= e($activeType) ?>">Reset</a>
+</form>
+<?php endif; ?>
 
 <section class="panel report-document">
     <div class="report-title">
@@ -156,7 +174,7 @@ $renderReportPagination = function (array $pagination, string $activeType): void
         <div class="table-wrap">
             <?php $renderReportPagination($reportPagination, $activeType); ?>
             <table data-no-client-pagination="true">
-                <thead><tr><th>Version</th><th>Train</th><th>Test</th><th>Loss</th><th>Val Loss</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>Durasi</th></tr></thead>
+                <thead><tr><th>Version</th><th>Train</th><th>Test</th><th>Loss</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>Durasi</th></tr></thead>
                 <tbody>
                 <?php foreach ($metrics as $row): ?>
                     <tr>
@@ -164,7 +182,6 @@ $renderReportPagination = function (array $pagination, string $activeType): void
                         <td data-label="Train"><?= e($row['train_samples']) ?></td>
                         <td data-label="Test"><?= e($row['test_samples']) ?></td>
                         <td data-label="Loss"><?= e($row['final_training_loss']) ?></td>
-                        <td data-label="Val Loss"><?= e($row['final_validation_loss']) ?></td>
                         <td data-label="MAE"><?= e($row['mae']) ?></td>
                         <td data-label="RMSE"><?= e($row['rmse']) ?></td>
                         <td data-label="MAPE"><?= e($row['mape']) ?></td>
@@ -178,7 +195,7 @@ $renderReportPagination = function (array $pagination, string $activeType): void
         <div class="table-wrap">
             <?php $renderReportPagination($reportPagination, $activeType); ?>
             <table data-no-client-pagination="true">
-                <thead><tr><th>Model</th><th>Window</th><th>Input Awal</th><th>Input Akhir</th><th>Tanggal Prediksi</th><th>Prediksi Close</th><th>Dibuat</th></tr></thead>
+                <thead><tr><th>Model</th><th>Window</th><th>Input Awal</th><th>Input Akhir</th><th>Periode Prediksi</th><th>Prediksi Close</th><th>Dibuat</th></tr></thead>
                 <tbody>
                 <?php foreach ($predictions as $row): ?>
                     <tr>
@@ -186,7 +203,7 @@ $renderReportPagination = function (array $pagination, string $activeType): void
                         <td data-label="Window"><?= e($row['window_size']) ?></td>
                         <td data-label="Input Awal"><?= e($formatTanggalIndonesia($row['input_start_date'] ?? null)) ?></td>
                         <td data-label="Input Akhir"><?= e($formatTanggalIndonesia($row['input_end_date'] ?? null)) ?></td>
-                        <td data-label="Tanggal Prediksi"><?= e($formatTanggalIndonesia($row['prediction_date'] ?? null)) ?></td>
+                        <td data-label="Periode Prediksi">Periode berikutnya</td>
                         <td data-label="Prediksi Close"><?= e($row['predicted_close']) ?></td>
                         <td data-label="Dibuat"><?= e($formatTanggalIndonesia($row['created_at'] ?? null, true)) ?></td>
                     </tr>

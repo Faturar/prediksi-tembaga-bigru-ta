@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Repositories\CopperPriceRepository;
+use App\Services\CopperPriceValidator;
 
 final class CopperPriceController extends Controller
 {
@@ -43,15 +44,64 @@ final class CopperPriceController extends Controller
     {
         $this->requireAuth();
         verify_csrf();
-        (new CopperPriceRepository())->upsert([
-            'date' => $_POST['date'],
-            'open' => $_POST['open'] ?: null,
-            'high' => $_POST['high'] ?: null,
-            'low' => $_POST['low'] ?: null,
-            'close' => $_POST['close'],
-            'volume' => $_POST['volume'] ?: null,
-            'change_percent' => $_POST['change_percent'] ?: null,
-        ]);
+        $repo = new CopperPriceRepository();
+        [$row, $errors] = (new CopperPriceValidator())->validate($_POST);
+        if ($row['date'] !== '' && $repo->findByDate($row['date'])) {
+            $errors[] = 'Tanggal sudah ada. Silakan edit data yang sudah tersimpan.';
+        }
+        if ($errors) {
+            $_SESSION['flash_error'] = implode(' ', $errors);
+            $this->redirect('/prices');
+        }
+        $repo->create($row);
+        $_SESSION['flash_success'] = 'Data harga berhasil ditambahkan.';
+        $this->redirect('/prices');
+    }
+
+    public function edit(): void
+    {
+        $this->requireAuth();
+        $row = (new CopperPriceRepository())->find((int) ($_GET['id'] ?? 0));
+        if (!$row) {
+            $_SESSION['flash_error'] = 'Data harga tidak ditemukan.';
+            $this->redirect('/prices');
+        }
+        $this->view('prices/edit', ['title' => 'Edit Data Harga', 'row' => $row]);
+    }
+
+    public function update(): void
+    {
+        $this->requireAuth();
+        verify_csrf();
+        $id = (int) ($_POST['id'] ?? 0);
+        $repo = new CopperPriceRepository();
+        $existing = $repo->find($id);
+        if (!$existing) {
+            $_SESSION['flash_error'] = 'Data harga tidak ditemukan.';
+            $this->redirect('/prices');
+        }
+
+        [$row, $errors] = (new CopperPriceValidator())->validate($_POST);
+        $duplicate = $row['date'] !== '' ? $repo->findByDate($row['date']) : null;
+        if ($duplicate && (int) $duplicate['id'] !== $id) {
+            $errors[] = 'Tanggal sudah digunakan data lain.';
+        }
+        if ($errors) {
+            $_SESSION['flash_error'] = implode(' ', $errors);
+            $this->redirect('/prices/edit?id=' . $id);
+        }
+
+        $repo->update($id, $row);
+        $_SESSION['flash_success'] = 'Data harga berhasil diperbarui.';
+        $this->redirect('/prices');
+    }
+
+    public function delete(): void
+    {
+        $this->requireAuth();
+        verify_csrf();
+        (new CopperPriceRepository())->delete((int) ($_POST['id'] ?? 0));
+        $_SESSION['flash_success'] = 'Data harga berhasil dihapus.';
         $this->redirect('/prices');
     }
 }

@@ -6,7 +6,7 @@ $selectedModel = $activeModel ?: $models[0];
     <div class="section-head">
         <div>
             <p class="eyebrow">Forecast</p>
-            <h2>Jalankan Prediksi</h2>
+            <h2>Prediksi Periode Berikutnya</h2>
         </div>
         <?php if ($activeModel): ?>
             <span class="model-active-chip">Aktif: <?= e($activeModel['version']) ?></span>
@@ -51,7 +51,7 @@ $selectedModel = $activeModel ?: $models[0];
             <div><span>Learning Rate</span><strong data-model-detail="learning"><?= e($selectedModel['learning_rate']) ?></strong></div>
             <div><span>Trained</span><strong data-model-detail="trained"><?= e($selectedModel['trained_at'] ?? '-') ?></strong></div>
         </div>
-        <button type="submit" class="full-width-button">Jalankan Prediksi</button>
+        <button type="submit" class="full-width-button">Jalankan Prediksi Periode Berikutnya</button>
     </form>
 </section>
 <?php else: ?>
@@ -73,14 +73,15 @@ $selectedModel = $activeModel ?: $models[0];
     </div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Model</th><th>Input Awal</th><th>Input Akhir</th><th>Prediksi</th><th>Dibuat</th></tr></thead>
+            <thead><tr><th>Model</th><th>Input Awal</th><th>Input Akhir</th><th>Periode</th><th>Prediksi Close</th><th>Dibuat</th></tr></thead>
             <tbody>
             <?php foreach ($predictions as $row): ?>
                 <tr>
                     <td data-label="Model"><?= e($row['version']) ?></td>
                     <td data-label="Input Awal"><?= e($row['input_start_date']) ?></td>
                     <td data-label="Input Akhir"><?= e($row['input_end_date']) ?></td>
-                    <td data-label="Prediksi"><?= e($row['predicted_close']) ?></td>
+                    <td data-label="Periode">Periode berikutnya</td>
+                    <td data-label="Prediksi Close"><?= e($row['predicted_close']) ?></td>
                     <td data-label="Dibuat"><?= e($row['created_at']) ?></td>
                 </tr>
             <?php endforeach; ?>

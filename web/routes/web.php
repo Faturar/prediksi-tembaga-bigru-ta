@@ -16,6 +16,9 @@ $router->post('/logout', [AuthController::class, 'logout']);
 
 $router->get('/prices', [CopperPriceController::class, 'index']);
 $router->post('/prices', [CopperPriceController::class, 'store']);
+$router->get('/prices/edit', [CopperPriceController::class, 'edit']);
+$router->post('/prices/update', [CopperPriceController::class, 'update']);
+$router->post('/prices/delete', [CopperPriceController::class, 'delete']);
 $router->get('/import', [ImportController::class, 'show']);
 $router->post('/import', [ImportController::class, 'store']);
 

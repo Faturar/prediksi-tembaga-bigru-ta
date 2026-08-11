@@ -32,8 +32,32 @@ $bestMaeRow = $metricCount ? array_reduce($metrics, fn ($best, $row) => $best ==
 <section class="panel">
     <div class="section-head">
         <div>
+            <p class="eyebrow">Test Data</p>
+            <h2>Actual vs Predicted</h2>
+            <?php if (!empty($selectedModel)): ?>
+                <small>Model <?= e($selectedModel['version']) ?><?= $selectedModel['is_active'] ? ' - aktif' : '' ?></small>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php if (!empty($metadataError)): ?>
+        <p class="alert"><?= e($metadataError) ?></p>
+    <?php elseif (empty($testSeries)): ?>
+        <div class="empty-state">
+            <strong>Belum ada data Actual vs Predicted.</strong>
+            <p>Pastikan model sukses memiliki metadata test_series dari training Python.</p>
+        </div>
+    <?php else: ?>
+        <div class="chart-box evaluation-chart-box">
+            <canvas id="actualPredictedChart" height="140"></canvas>
+        </div>
+    <?php endif; ?>
+</section>
+
+<section class="panel">
+    <div class="section-head">
+        <div>
             <p class="eyebrow">Comparison</p>
-            <h2>Perbandingan Evaluasi Model</h2>
+            <h2>Perbandingan Hasil Model BiGRU</h2>
         </div>
         <label class="chart-limit-field">Tampilkan
             <select id="metricChartLimit">
@@ -89,6 +113,26 @@ $bestMaeRow = $metricCount ? array_reduce($metrics, fn ($best, $row) => $best ==
 
 <?php if (!empty($metrics)): ?>
 <script>
+<?php if (!empty($testSeries)): ?>
+const testSeriesRows = <?= json_encode($testSeries, JSON_THROW_ON_ERROR) ?>;
+new Chart(document.getElementById('actualPredictedChart'), {
+    type: 'line',
+    data: {
+        labels: testSeriesRows.map(row => row.date),
+        datasets: [
+            { label: 'Actual', data: testSeriesRows.map(row => Number(row.actual)), borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.08)', tension: 0.25 },
+            { label: 'Predicted', data: testSeriesRows.map(row => Number(row.predicted)), borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.08)', tension: 0.25 }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false } },
+        scales: { x: { ticks: { autoSkip: true, maxRotation: 0 } }, y: { beginAtZero: false } }
+    }
+});
+<?php endif; ?>
+
 const metricRows = <?= json_encode($metrics, JSON_THROW_ON_ERROR) ?>;
 const metricLimit = document.getElementById('metricChartLimit');
 const metricContext = document.getElementById('metricChart');

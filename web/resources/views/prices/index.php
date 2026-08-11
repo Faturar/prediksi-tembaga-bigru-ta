@@ -7,7 +7,7 @@
     <label class="field-close">Close <input type="number" step="0.0001" name="close" required></label>
     <label class="field-volume">Volume <input type="number" name="volume"></label>
     <label class="field-change">Change % <input type="number" step="0.0001" name="change_percent"></label>
-    <button type="submit">Simpan</button>
+    <button type="submit">Tambah Data</button>
 </form>
 
 <section class="panel">
@@ -51,7 +51,7 @@
             </nav>
         </div>
         <table data-no-client-pagination="true">
-            <thead><tr><th>Tanggal</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th><th>Change %</th></tr></thead>
+            <thead><tr><th>Tanggal</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th><th>Change %</th><th>Aksi</th></tr></thead>
             <tbody>
             <?php foreach ($rows as $row): ?>
                 <tr>
@@ -62,6 +62,14 @@
                     <td data-label="Close"><?= e($row['close']) ?></td>
                     <td data-label="Volume"><?= e($row['volume']) ?></td>
                     <td data-label="Change %"><?= e($row['change_percent']) ?></td>
+                    <td data-label="Aksi">
+                        <a class="button-secondary" href="/prices/edit?id=<?= e($row['id']) ?>">Edit</a>
+                        <form method="post" action="/prices/delete" class="inline-form" onsubmit="return confirm('Hapus data harga tanggal <?= e($row['date']) ?>?')">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="id" value="<?= e($row['id']) ?>">
+                            <button type="submit" class="danger-button">Hapus</button>
+                        </form>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

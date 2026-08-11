@@ -10,7 +10,12 @@ final class ModelRunRepository
 {
     public function all(): array
     {
-        return Database::connection()->query('SELECT * FROM model_runs ORDER BY created_at DESC')->fetchAll();
+        return Database::connection()->query(
+            'SELECT m.*, mm.train_samples, mm.test_samples, mm.mae, mm.rmse, mm.mape
+             FROM model_runs m
+             LEFT JOIN model_metrics mm ON mm.model_run_id = m.id
+             ORDER BY m.created_at DESC'
+        )->fetchAll();
     }
 
     public function reset(): void

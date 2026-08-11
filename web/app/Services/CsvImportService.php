@@ -58,7 +58,7 @@ final class CsvImportService
             return null;
         }
 
-        return [
+        $normalized = [
             'date' => $normalizedDate,
             'open' => $this->number($this->value($row, ['open', 'pembukaan'])),
             'high' => $this->number($this->value($row, ['high', 'tertinggi'])),
@@ -67,6 +67,8 @@ final class CsvImportService
             'volume' => $this->volume($this->value($row, ['volume', 'vol', 'vol.'])),
             'change_percent' => $this->number($this->value($row, ['change %', 'change_percent', 'change'])),
         ];
+        [, $errors] = (new CopperPriceValidator())->validate($normalized);
+        return $errors ? null : $normalized;
     }
 
     private function header(string $value): string

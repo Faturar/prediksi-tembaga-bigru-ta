@@ -13,7 +13,6 @@ class ArtifactStore:
     def paths(self, version: str) -> dict[str, Path]:
         return {
             "model": self.settings.model_dir / f"{version}.keras",
-            "fallback_model": self.settings.model_dir / f"{version}.joblib",
             "scaler": self.settings.scaler_dir / f"{version}.joblib",
             "metadata": self.settings.metadata_dir / f"{version}.json",
         }
