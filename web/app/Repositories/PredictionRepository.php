@@ -10,7 +10,7 @@ final class PredictionRepository
 {
     public function latest(): array
     {
-        return Database::connection()->query('SELECT p.*, m.version FROM predictions p JOIN model_runs m ON m.id = p.model_run_id ORDER BY p.created_at DESC LIMIT 50')->fetchAll();
+        return Database::connection()->query('SELECT p.*, m.version, m.window_size FROM predictions p JOIN model_runs m ON m.id = p.model_run_id ORDER BY p.created_at DESC LIMIT 50')->fetchAll();
     }
 
     public function reset(): void
@@ -25,8 +25,15 @@ final class PredictionRepository
         $pdo->exec('ALTER TABLE predictions AUTO_INCREMENT = 1');
     }
 
-    public function create(int $modelRunId, array $result, array $window): int
+    public function create(int $modelRunId, array $result, array $window, int $expectedWindowSize): int
     {
+        if (count($window) !== $expectedWindowSize) {
+            throw new \InvalidArgumentException('Jumlah input prediksi tidak sesuai window size model.');
+        }
+        if (!isset($result['predicted_close'])) {
+            throw new \InvalidArgumentException('Response prediksi tidak memiliki nilai predicted_close.');
+        }
+
         $pdo = Database::connection();
         $pdo->beginTransaction();
         $stmt = $pdo->prepare('INSERT INTO predictions (model_run_id, prediction_date, input_start_date, input_end_date, predicted_close, model_version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())');

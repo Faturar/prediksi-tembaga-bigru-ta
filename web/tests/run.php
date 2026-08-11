@@ -43,6 +43,36 @@ $checks = [
             && method_exists(App\Services\MlApiClient::class, 'predict')
             && method_exists(App\Services\MlApiClient::class, 'model');
     },
+    'prediction window uses exact model window ascending' => function (): bool {
+        $rows = [
+            ['date' => '2026-08-09', 'close' => 104],
+            ['date' => '2026-08-07', 'close' => 102],
+            ['date' => '2026-08-08', 'close' => 103],
+            ['date' => '2026-08-06', 'close' => 101],
+        ];
+        $window = (new App\Services\PredictionWindowService())->build($rows, 3);
+        return count($window) === 3
+            && array_column($window, 'date') === ['2026-08-07', '2026-08-08', '2026-08-09'];
+    },
+    'prediction window rejects insufficient data' => function (): bool {
+        try {
+            (new App\Services\PredictionWindowService())->build([['date' => '2026-08-11', 'close' => 100]], 2);
+        } catch (LengthException $e) {
+            return str_contains($e->getMessage(), 'minimal 2 observasi harga penutupan');
+        }
+        return false;
+    },
+    'prediction UI states one-step target and has no date picker' => function (): bool {
+        $view = file_get_contents(base_path('resources/views/predictions/index.php')) ?: '';
+        return str_contains($view, 'Periode Perdagangan Berikutnya')
+            && str_contains($view, 'satu observasi perdagangan berikutnya')
+            && !str_contains($view, 'type="date"');
+    },
+    'prediction create keeps traceability guard' => function (): bool {
+        $source = file_get_contents(base_path('app/Repositories/PredictionRepository.php')) ?: '';
+        return str_contains($source, 'count($window) !== $expectedWindowSize')
+            && str_contains($source, 'prediction_inputs');
+    },
 ];
 
 $failed = 0;

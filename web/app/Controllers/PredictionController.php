@@ -9,6 +9,7 @@ use App\Repositories\CopperPriceRepository;
 use App\Repositories\ModelRunRepository;
 use App\Repositories\PredictionRepository;
 use App\Services\MlApiClient;
+use App\Services\PredictionWindowService;
 
 final class PredictionController extends Controller
 {
@@ -16,10 +17,23 @@ final class PredictionController extends Controller
     {
         $this->requireAuth();
         $models = new ModelRunRepository();
+        $successfulModels = $models->successful();
+        $activeModel = $models->active();
+        $selectedModel = $activeModel ?: ($successfulModels[0] ?? null);
+        $orderedPrices = (new CopperPriceRepository())->orderedClosePrices();
+        $windowService = new PredictionWindowService();
+        $modelContexts = [];
+        foreach ($successfulModels as $model) {
+            $modelContexts[(int) $model['id']] = $windowService->context($orderedPrices, $model);
+        }
+
         $this->view('predictions/index', [
             'title' => 'Prediksi',
-            'activeModel' => $models->active(),
-            'models' => $models->successful(),
+            'activeModel' => $activeModel,
+            'models' => $successfulModels,
+            'selectedModel' => $selectedModel,
+            'targetContext' => $windowService->context($orderedPrices, $selectedModel),
+            'modelContexts' => $modelContexts,
             'predictions' => (new PredictionRepository())->latest(),
         ]);
     }
@@ -35,18 +49,20 @@ final class PredictionController extends Controller
             $_SESSION['flash_error'] = 'Pilih model training yang sudah sukses untuk menjalankan prediksi.';
             $this->redirect('/predictions');
         }
-        $all = (new CopperPriceRepository())->orderedClosePrices();
-        $window = array_slice($all, -1 * (int) $model['window_size']);
-        if (count($window) < (int) $model['window_size']) {
-            $_SESSION['flash_error'] = 'Data harga belum cukup untuk prediksi model ' . $model['version'] . '.';
+        $orderedRows = (new CopperPriceRepository())->orderedClosePrices();
+        try {
+            $window = (new PredictionWindowService())->build($orderedRows, (int) $model['window_size']);
+        } catch (\LengthException $e) {
+            $_SESSION['flash_error'] = $e->getMessage();
             $this->redirect('/predictions');
         }
 
         try {
             $result = (new MlApiClient())->predict(['model_version' => $model['version'], 'window' => $window]);
-            (new PredictionRepository())->create((int) $model['id'], $result, $window);
+            (new PredictionRepository())->create((int) $model['id'], $result, $window, (int) $model['window_size']);
+            $_SESSION['flash_success'] = 'Hasil Prediksi Periode Perdagangan Berikutnya berhasil disimpan.';
         } catch (\Throwable $e) {
-            $_SESSION['flash_error'] = 'Prediksi gagal: ' . $e->getMessage();
+            $_SESSION['flash_error'] = 'Prediksi gagal: ' . $this->predictionError($e->getMessage());
         }
         $this->redirect('/predictions');
     }
@@ -58,5 +74,17 @@ final class PredictionController extends Controller
         (new PredictionRepository())->reset();
         $_SESSION['flash_success'] = 'Semua data prediksi berhasil direset.';
         $this->redirect('/predictions');
+    }
+
+    private function predictionError(string $message): string
+    {
+        $lower = strtolower($message);
+        if (str_contains($lower, 'could not resolve host') || str_contains($lower, 'failed to connect') || str_contains($lower, 'timed out')) {
+            return 'Layanan machine learning tidak dapat diakses.';
+        }
+        if (str_contains($lower, 'not found') || str_contains($lower, 'artifact') || str_contains($lower, 'keras bigru model')) {
+            return 'Artifact model BiGRU tidak ditemukan.';
+        }
+        return $message;
     }
 }
