@@ -56,6 +56,41 @@ final class CopperPriceRepository
             ->fetchAll();
     }
 
+    public function historicalClose(?string $startDate = null): array
+    {
+        if ($startDate === null) {
+            return $this->orderedClosePrices();
+        }
+
+        $stmt = Database::connection()
+            ->prepare('SELECT date, close FROM copper_prices WHERE date >= ? ORDER BY date ASC');
+        $stmt->execute([$startDate]);
+        return $stmt->fetchAll();
+    }
+
+    public function historicalRecords(?string $startDate = null): array
+    {
+        if ($startDate === null) {
+            return Database::connection()
+                ->query('SELECT date, open, high, low, close, volume FROM copper_prices ORDER BY date ASC')
+                ->fetchAll();
+        }
+
+        $stmt = Database::connection()
+            ->prepare('SELECT date, open, high, low, close, volume FROM copper_prices WHERE date >= ? ORDER BY date ASC');
+        $stmt->execute([$startDate]);
+        return $stmt->fetchAll();
+    }
+
+    public function latestDate(): ?string
+    {
+        $latest = Database::connection()
+            ->query('SELECT MAX(date) FROM copper_prices')
+            ->fetchColumn();
+
+        return $latest ? (string) $latest : null;
+    }
+
     public function upsert(array $row): string
     {
         $sql = 'INSERT INTO copper_prices (`date`, open, high, low, close, volume, change_percent, created_at, updated_at)

@@ -22,6 +22,7 @@ class TrainRequest(BaseModel):
 class PredictRequest(BaseModel):
     model_version: str
     window: list[PricePoint]
+    horizon: int = Field(default=1, ge=1, le=7)
 
 
 class Metrics(BaseModel):
@@ -52,7 +53,15 @@ class TrainResponse(BaseModel):
     training_duration_seconds: float
 
 
+class ForecastPoint(BaseModel):
+    step: int
+    predicted_close: float
+
+
 class PredictResponse(BaseModel):
     model_version: str
     predicted_close: float
     prediction_date: date | None = None
+    horizon: int = 1
+    strategy: str = "recursive"
+    predictions: list[ForecastPoint]

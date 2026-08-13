@@ -9,6 +9,12 @@ $datasetStart = $priceSummary['start_date'] ?? null;
 $datasetEnd = $priceSummary['end_date'] ?? null;
 $chartStart = $priceLabels[0] ?? null;
 $chartEnd = !empty($priceLabels) ? end($priceLabels) : null;
+$chartObservationCount = count($priceValues);
+$formatDate = static fn (?string $date): string => format_indonesian_date($date);
+$formatNumber = static fn (int|float|string|null $value, int $decimals = 0): string => $value === null ? '-' : number_format((float) $value, $decimals, ',', '.');
+$rangeOptions = $priceRangeOptions ?? [];
+$selectedRange = $selectedPriceRange ?? '1y';
+$selectedRangeLabel = $selectedPriceRangeLabel ?? '1 Tahun Terakhir';
 ?>
 
 <section class="dashboard-welcome">
@@ -71,28 +77,74 @@ $chartEnd = !empty($priceLabels) ? end($priceLabels) : null;
     </div>
 </div>
 
-<div class="dashboard-grid">
-    <section class="analytics-card small-card">
-        <div class="section-head">
-            <div>
-                <p class="eyebrow">Dataset</p>
-                <h2>Data Coverage</h2>
-            </div>
-            <span class="trend-badge"><?= e($priceCount) ?> row</span>
+<section class="analytics-card historical-close-card">
+    <div class="section-head historical-chart-head">
+        <div>
+            <p class="eyebrow"><?= $selectedRange === 'all' ? 'Dataset Historis Keseluruhan' : 'Dataset Historis' ?></p>
+            <h2>Pergerakan Harga Penutupan Tembaga</h2>
+            <p class="card-note">Visualisasi Close Price berdasarkan data historis yang tersimpan pada sistem.</p>
         </div>
-        <?php if (empty($priceValues)): ?>
-        <div class="empty-chart">
-            <strong>Belum ada data harga.</strong>
-            <small>Import CSV atau input data manual untuk menampilkan chart close price.</small>
-            <a href="/import">Import Dataset</a>
-        </div>
-        <?php else: ?>
-        <canvas id="dashboardPriceChart" height="160"></canvas>
+        <?php if (!empty($priceValues)): ?>
+        <button type="button" class="button-secondary export-chart-button" id="downloadClosePriceChart">Unduh Grafik PNG</button>
         <?php endif; ?>
-        <p class="card-note">Chart menampilkan maksimal 30 data
-            terbaru<?= $chartStart && $chartEnd ? e(" ({$chartStart} - {$chartEnd})") : '' ?> dari seluruh dataset.</p>
-    </section>
+    </div>
 
+    <div class="dataset-summary-grid">
+        <div>
+            <span>Total Data</span>
+            <strong><?= e($formatNumber($priceSummary['total_rows'] ?? 0)) ?></strong>
+        </div>
+        <div>
+            <span>Periode Dataset</span>
+            <strong><?= e($formatDate($datasetStart) . ' - ' . $formatDate($datasetEnd)) ?></strong>
+        </div>
+        <div>
+            <span>Close Terendah</span>
+            <strong><?= e($formatNumber($priceSummary['min_close'] ?? null, 4)) ?></strong>
+        </div>
+        <div>
+            <span>Close Tertinggi</span>
+            <strong><?= e($formatNumber($priceSummary['max_close'] ?? null, 4)) ?></strong>
+        </div>
+    </div>
+
+    <nav class="range-selector" aria-label="Pilih rentang grafik harga penutupan">
+        <?php foreach ($rangeOptions as $key => $option): ?>
+        <a class="<?= $selectedRange === $key ? 'active' : '' ?>" href="/dashboard?<?= e(http_build_query(['range' => $key])) ?>">
+            <?= e($option['label']) ?>
+        </a>
+        <?php endforeach; ?>
+    </nav>
+
+    <?php if (empty($priceValues)): ?>
+    <div class="empty-chart historical-empty">
+        <strong>Belum ada data harga untuk divisualisasikan.</strong>
+        <small>Import CSV atau input data manual untuk menampilkan grafik Close Price.</small>
+        <a href="/import">Import Dataset</a>
+    </div>
+    <?php else: ?>
+    <div class="chart-box historical-chart-box">
+        <canvas id="dashboardPriceChart"></canvas>
+    </div>
+
+    <div class="selected-range-info">
+        <div>
+            <span>Menampilkan</span>
+            <strong><?= e($selectedRangeLabel) ?></strong>
+        </div>
+        <div>
+            <span>Periode</span>
+            <strong><?= e($formatDate($chartStart) . ' - ' . $formatDate($chartEnd)) ?></strong>
+        </div>
+        <div>
+            <span>Jumlah Observasi</span>
+            <strong><?= e($formatNumber($chartObservationCount)) ?> observasi</strong>
+        </div>
+    </div>
+    <?php endif; ?>
+</section>
+
+<div class="dashboard-grid dashboard-secondary-grid">
     <section class="analytics-card wide-card">
         <div class="section-head">
             <div>
@@ -111,9 +163,7 @@ $chartEnd = !empty($priceLabels) ? end($priceLabels) : null;
         <canvas id="dashboardPredictionChart" height="120"></canvas>
         <?php endif; ?>
     </section>
-</div>
 
-<div class="dashboard-grid bottom-grid">
     <section class="analytics-card">
         <div class="section-head">
             <div>
@@ -128,7 +178,9 @@ $chartEnd = !empty($priceLabels) ? end($priceLabels) : null;
             <a href="/reports"><span>4</span><strong>Cetak Laporan</strong><small>Siapkan bukti BAB IV</small></a>
         </div>
     </section>
+</div>
 
+<div class="dashboard-grid bottom-grid">
     <section class="analytics-card">
         <div class="section-head">
             <div>
@@ -156,10 +208,10 @@ $chartEnd = !empty($priceLabels) ? end($priceLabels) : null;
                 <tbody>
                     <?php foreach ($predictions as $row): ?>
                     <tr>
-                        <td data-label="Tanggal Input"><?= e($row['input_end_date']) ?></td>
+                        <td data-label="Tanggal Input"><?= e($formatDate($row['input_end_date'])) ?></td>
                         <td data-label="Model"><?= e($row['version']) ?></td>
                         <td data-label="Prediksi Close"><strong><?= e($row['predicted_close']) ?></strong></td>
-                        <td data-label="Dibuat"><?= e($row['created_at']) ?></td>
+                        <td data-label="Dibuat"><?= e(format_indonesian_date($row['created_at'] ?? null, true)) ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -170,45 +222,121 @@ $chartEnd = !empty($priceLabels) ? end($priceLabels) : null;
 </div>
 
 <script>
+const fullDateFormatter = new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+});
+function formatChartFullDate(label) {
+    if (!label) {
+        return '';
+    }
+
+    const [year, month, day] = String(label).split('-').map(Number);
+    const date = year && month ? new Date(year, month - 1, day || 1) : new Date(label);
+    return Number.isNaN(date.getTime()) ? label : fullDateFormatter.format(date);
+}
+
 <?php if (!empty($priceValues)): ?>
-new Chart(document.getElementById('dashboardPriceChart'), {
-    type: 'bar',
+const closePriceLabels = <?= json_encode($priceLabels, JSON_THROW_ON_ERROR) ?>;
+const closePriceValues = <?= json_encode($priceValues, JSON_THROW_ON_ERROR) ?>;
+const closePriceDateFormatter = new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+});
+const dashboardPriceChart = new Chart(document.getElementById('dashboardPriceChart'), {
+    type: 'line',
     data: {
-        labels: <?= json_encode($priceLabels, JSON_THROW_ON_ERROR) ?>,
+        labels: closePriceLabels,
         datasets: [{
             label: 'Close Price',
-            data: <?= json_encode($priceValues, JSON_THROW_ON_ERROR) ?>,
-            backgroundColor: <?= json_encode(array_map(fn ($i) => $i % 2 === 0 ? '#4ade80' : '#202020', array_keys($priceValues)), JSON_THROW_ON_ERROR) ?>,
-            borderRadius: 7,
-            maxBarThickness: 26
+            data: closePriceValues,
+            borderColor: '#c06b32',
+            backgroundColor: 'rgba(192, 107, 50, 0.08)',
+            borderWidth: closePriceValues.length > 1200 ? 1.6 : 2.2,
+            tension: 0.18,
+            fill: true,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            pointHitRadius: 12
         }]
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false
+        },
         plugins: {
             legend: {
-                display: false
+                display: true,
+                labels: {
+                    boxWidth: 12,
+                    usePointStyle: true
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    title(items) {
+                        const label = items[0]?.label || '';
+                        return label ? closePriceDateFormatter.format(new Date(label)) : '';
+                    },
+                    label(context) {
+                        const value = Number(context.parsed.y || 0).toLocaleString('id-ID', {
+                            minimumFractionDigits: 4,
+                            maximumFractionDigits: 4
+                        });
+                        return `Close Price: ${value}`;
+                    }
+                }
             }
         },
         scales: {
             x: {
+                title: {
+                    display: true,
+                    text: 'Tanggal'
+                },
                 grid: {
                     display: false
                 },
                 ticks: {
                     maxRotation: 0,
                     autoSkip: true,
-                    maxTicksLimit: 5
+                    maxTicksLimit: closePriceValues.length > 900 ? 8 : 10,
+                    callback(value) {
+                        return formatChartFullDate(this.getLabelForValue(value));
+                    }
                 }
             },
             y: {
                 beginAtZero: false,
+                title: {
+                    display: true,
+                    text: 'Close Price'
+                },
                 grid: {
                     color: 'rgba(17, 24, 39, 0.08)'
+                },
+                ticks: {
+                    callback(value) {
+                        return Number(value).toLocaleString('id-ID', {
+                            maximumFractionDigits: 4
+                        });
+                    }
                 }
             }
         }
     }
+});
+
+document.getElementById('downloadClosePriceChart')?.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.href = dashboardPriceChart.toBase64Image('image/png', 1);
+    link.download = 'grafik-close-price-tembaga.png';
+    link.click();
 });
 <?php endif; ?>
 
@@ -233,12 +361,26 @@ new Chart(document.getElementById('dashboardPredictionChart'), {
         plugins: {
             legend: {
                 display: false
+            },
+            tooltip: {
+                callbacks: {
+                    title(items) {
+                        return formatChartFullDate(items[0]?.label || '');
+                    }
+                }
             }
         },
         scales: {
             x: {
                 grid: {
                     display: false
+                },
+                ticks: {
+                    maxRotation: 0,
+                    autoSkip: true,
+                    callback(value) {
+                        return formatChartFullDate(this.getLabelForValue(value));
+                    }
                 }
             },
             y: {

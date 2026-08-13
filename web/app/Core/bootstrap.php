@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 session_start();
+date_default_timezone_set('Asia/Jakarta');
 
 spl_autoload_register(function (string $class): void {
     $prefix = 'App\\';
@@ -44,4 +45,29 @@ function env(string $key, mixed $default = null): mixed
 function config(string $file): array
 {
     return require base_path("config/{$file}.php");
+}
+
+function format_indonesian_date(?string $value, bool $withTime = false): string
+{
+    if ($value === null || $value === '') {
+        return '-';
+    }
+
+    $timestamp = strtotime($value);
+    if ($timestamp === false) {
+        return $value;
+    }
+
+    $date = (new DateTimeImmutable('@' . $timestamp))->setTimezone(new DateTimeZone('Asia/Jakarta'));
+    $months = [1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    $day = $date->format('j');
+    $month = $months[(int) $date->format('n')] ?? $date->format('F');
+    $year = $date->format('Y');
+    $formatted = sprintf('%s %s %s', $day, $month, $year);
+
+    if ($withTime) {
+        $formatted .= ' ' . $date->format('H:i');
+    }
+
+    return $formatted;
 }

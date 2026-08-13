@@ -7,7 +7,7 @@ $flashSuccess = $_SESSION['flash_success'] ?? null;
 unset($_SESSION['flash_error']);
 unset($_SESSION['flash_success']);
 $navItems = [
-    '/' => ['Dashboard', 'grid'],
+    '/dashboard' => ['Dashboard', 'grid'],
     '/prices' => ['Data Harga', 'bars'],
     '/import' => ['Import CSV', 'upload'],
     '/models' => ['Model', 'chart'],
@@ -64,12 +64,24 @@ $navItems = [
                 <button class="link-button" type="submit">Logout</button>
             </form>
         </aside>
+    <?php elseif ($currentPath !== '/login'): ?>
+        <header class="public-header">
+            <div class="public-brand">
+                <a href="/" class="brand-link"><strong><?= e($appName) ?></strong></a>
+            </div>
+            <nav class="public-nav" aria-label="Navigasi publik">
+                <a class="<?= $currentPath === '/' ? 'active' : '' ?>" href="/">Beranda</a>
+                <a class="<?= $currentPath === '/historical' ? 'active' : '' ?>" href="/historical">Data Historis</a>
+                <a class="<?= $currentPath === '/forecast' ? 'active' : '' ?>" href="/forecast">Prediksi</a>
+                <a href="/login">Login Admin</a>
+            </nav>
+        </header>
     <?php endif; ?>
-    <main class="<?= $user ? 'content' : 'auth-content' ?>">
+    <main class="<?= $user ? 'content' : ($currentPath === '/login' ? 'auth-content' : 'public-content') ?>">
         <?php if ($user): ?>
             <header class="page-bar">
                 <div>
-                    <p class="eyebrow"><?= e(date('F d, Y')) ?></p>
+                    <p class="eyebrow"><?= e(format_indonesian_date(date('Y-m-d'))) ?></p>
                     <h1><?= e($title ?? 'Dashboard') ?></h1>
                 </div>
                 <div class="top-actions">
@@ -87,7 +99,7 @@ $navItems = [
         <?php if (!empty($flashError)): ?><p class="alert"><?= e($flashError) ?></p><?php endif; ?>
         <?php require $viewPath; ?>
     </main>
-    <?php if ($user): ?><script src="/assets/js/table-pagination.js"></script><?php endif; ?>
+    <?php if ($currentPath !== '/login'): ?><script src="/assets/js/table-pagination.js"></script><?php endif; ?>
     <?php if ($user): ?><script src="/assets/js/navigation.js"></script><?php endif; ?>
 </body>
 </html>

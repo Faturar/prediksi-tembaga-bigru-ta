@@ -23,14 +23,14 @@ Python bertanggung jawab atas preprocessing, normalisasi MinMaxScaler, sliding w
 - Evaluasi memakai MAE, RMSE, dan MAPE setelah inverse transform ke skala harga asli.
 - Prediksi merepresentasikan periode/observasi perdagangan berikutnya, bukan tanggal kalender yang dibuat otomatis.
 
-TensorFlow/Keras wajib tersedia untuk training BiGRU. Jika TensorFlow tidak tersedia, training gagal dan tidak ada fallback Linear Regression.
+TensorFlow/Keras wajib tersedia untuk training BiGRU. Gunakan Python 3.11 untuk ML service di Windows karena TensorFlow belum tersedia untuk semua versi Python terbaru. Jika TensorFlow tidak tersedia, training gagal dan tidak ada fallback Linear Regression.
 
 ## Setup
 
 1. Import schema:
 
    ```powershell
-   mysql -u root < web/database/schema.sql
+   Get-Content web/database/schema.sql | mysql -u root
    ```
 
 2. Copy env files:
@@ -51,13 +51,13 @@ TensorFlow/Keras wajib tersedia untuk training BiGRU. Jika TensorFlow tidak ters
 
    ```powershell
    cd ml-service
-   py -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+   py -3.11 -m venv .venv311
+   .\.venv311\Scripts\Activate.ps1
    pip install -r requirements.txt
    uvicorn app.main:app --reload --port 8001
    ```
 
-Seed admin lokal development: `admin@example.com` / `password`. Ganti kredensial ini untuk konfigurasi selain development lokal.
+Seed admin lokal development: `admin@gmail.com` / `admin123`. Ganti kredensial ini untuk konfigurasi selain development lokal.
 
 ## Verification
 
@@ -66,12 +66,12 @@ cd web
 php tests/run.php
 
 cd ..\ml-service
-py -m compileall app tests
+.\.venv311\Scripts\python.exe -m compileall app tests
 ```
 
 After Python dependencies are installed, run:
 
 ```powershell
 cd ml-service
-.\.venv\Scripts\python.exe -m pytest
+.\.venv311\Scripts\python.exe -m pytest
 ```

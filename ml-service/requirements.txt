@@ -7,5 +7,4 @@ scikit-learn>=1.4
 joblib>=1.4
 pytest>=8.0
 httpx>=0.27
-# Install TensorFlow manually when your Python version is compatible:
-# tensorflow>=2.16
+tensorflow>=2.16; python_version < "3.13"

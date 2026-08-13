@@ -42,7 +42,7 @@
                     <td data-label="Updated"><?= e($row['updated_rows']) ?></td>
                     <td data-label="Invalid"><?= e($row['invalid_rows']) ?></td>
                     <td data-label="Status"><?= e($row['status']) ?></td>
-                    <td data-label="Waktu"><?= e($row['created_at']) ?></td>
+                    <td data-label="Waktu"><?= e(format_indonesian_date($row['created_at'] ?? null, true)) ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

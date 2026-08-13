@@ -72,27 +72,89 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
 </div>
 
 <?php if (in_array($activeType, ['dataset', 'prediction'], true)): ?>
-<form method="get" class="grid-form report-filter-form">
-    <input type="hidden" name="type" value="<?= e($activeType) ?>">
-    <label>Mulai <input type="date" name="start_date" value="<?= e($filters['start_date'] ?? '') ?>"></label>
-    <label>Sampai <input type="date" name="end_date" value="<?= e($filters['end_date'] ?? '') ?>"></label>
-    <button type="submit">Filter</button>
-    <a class="button-secondary" href="/reports?type=<?= e($activeType) ?>">Reset</a>
-</form>
+<?php
+    $displayStart = !empty($filters['start_date']) ? date('d/m/Y', strtotime($filters['start_date'])) : '';
+    $displayEnd = !empty($filters['end_date']) ? date('d/m/Y', strtotime($filters['end_date'])) : '';
+?>
+<div class="report-header-filter">
+    <form method="get" class="report-filter-form" id="report-filter-form">
+        <input type="hidden" name="type" value="<?= e($activeType) ?>">
+        <input type="hidden" name="start_date" id="start_date_iso" value="<?= e($filters['start_date'] ?? '') ?>">
+        <input type="hidden" name="end_date" id="end_date_iso" value="<?= e($filters['end_date'] ?? '') ?>">
+
+        <div class="filter-grid">
+            <label>
+                <span>Mulai</span>
+                <input type="text" id="start_date_display" name="start_date_display" placeholder="dd/mm/yyyy" value="<?= e($displayStart) ?>">
+            </label>
+            <label>
+                <span>Sampai</span>
+                <input type="text" id="end_date_display" name="end_date_display" placeholder="dd/mm/yyyy" value="<?= e($displayEnd) ?>">
+            </label>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit">Filter</button>
+            <a class="button-secondary" href="/reports?type=<?= e($activeType) ?>">Reset</a>
+        </div>
+    </form>
+</div>
+
+<script>
+(() => {
+    const form = document.getElementById('report-filter-form');
+    const startDisplay = document.getElementById('start_date_display');
+    const endDisplay = document.getElementById('end_date_display');
+    const startIso = document.getElementById('start_date_iso');
+    const endIso = document.getElementById('end_date_iso');
+
+    const toIso = (ddmmyy) => {
+        if (!ddmmyy || !ddmmyy.trim()) return '';
+        const parts = ddmmyy.trim().split('/');
+        if (parts.length !== 3) return null;
+
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        const year = parts[2];
+
+        if (!/^\d{4}$/.test(year)) return null;
+        const d = Number(day);
+        const m = Number(month);
+        if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+
+        return `${year}-${month}-${day}`;
+    };
+
+    form.addEventListener('submit', (event) => {
+        const startValue = toIso(startDisplay.value);
+        const endValue = toIso(endDisplay.value);
+
+        if (startDisplay.value && !startValue) {
+            event.preventDefault();
+            alert('Format Mulai harus dd/mm/yyyy');
+            return;
+        }
+
+        if (endDisplay.value && !endValue) {
+            event.preventDefault();
+            alert('Format Sampai harus dd/mm/yyyy');
+            return;
+        }
+
+        startIso.value = startValue || '';
+        endIso.value = endValue || '';
+    });
+})();
+</script>
 <?php endif; ?>
 
 <section class="panel report-document">
     <div class="report-title">
         <div>
-            <p class="eyebrow">Dokumen Kampus</p>
             <h2><?= e($activeTitle) ?></h2>
             <?php if ($activeType === 'dataset'): ?>
                 <p>Periode data: <?= e($formatTanggalIndonesia($priceSummary['start_date'] ?? null)) ?> sampai <?= e($formatTanggalIndonesia($priceSummary['end_date'] ?? null)) ?></p>
             <?php endif; ?>
-        </div>
-        <div class="report-print-meta">
-            <span>Tanggal Cetak</span>
-            <strong><?= e($formatTanggalIndonesia(date('Y-m-d H:i'), true)) ?></strong>
         </div>
     </div>
 

@@ -32,9 +32,10 @@ def test_model_architecture_exactly_one_bidirectional_layer():
     dense_layers = [layer for layer in built.layers if layer.__class__.__name__ == "Dense"]
 
     assert len(bidirectional_layers) == 1
-    assert bidirectional_layers[0].layer.__class__.__name__ == "GRU"
-    assert bidirectional_layers[0].layer.units == 64
-    assert bidirectional_layers[0].layer.return_sequences is False
+    wrapped_gru = getattr(bidirectional_layers[0], "layer", None) or bidirectional_layers[0].forward_layer
+    assert wrapped_gru.__class__.__name__ == "GRU"
+    assert wrapped_gru.units == 64
+    assert wrapped_gru.return_sequences is False
     assert dense_layers[-1].units == 1
     assert built.loss == "mse"
     assert built.optimizer.__class__.__name__ == "Adam"

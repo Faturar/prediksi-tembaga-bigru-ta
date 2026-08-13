@@ -21,7 +21,7 @@ final class AuthController extends Controller
         if ($user && password_verify($_POST['password'] ?? '', $user['password'])) {
             session_regenerate_id(true);
             $_SESSION['user'] = ['id' => (int) $user['id'], 'name' => $user['name'], 'email' => $user['email']];
-            $this->redirect('/');
+            $this->redirect('/dashboard');
         }
         $this->view('auth/login', ['title' => 'Login', 'error' => 'Email atau password salah.']);
     }

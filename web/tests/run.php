@@ -38,6 +38,26 @@ $checks = [
             && str_contains($routes, '/prices/update')
             && str_contains($routes, '/prices/delete');
     },
+    'public routes exist' => function (): bool {
+        $routes = file_get_contents(base_path('routes/web.php')) ?: '';
+        return str_contains($routes, '/historical')
+            && str_contains($routes, '/forecast')
+            && str_contains($routes, '/dashboard')
+            && str_contains($routes, '/login');
+    },
+    'public pages have login admin link' => function (): bool {
+        $layout = file_get_contents(base_path('resources/views/layouts/app.php')) ?: '';
+        return str_contains($layout, 'Login Admin')
+            && str_contains($layout, '/historical')
+            && str_contains($layout, '/forecast');
+    },
+    'public views do not expose ML_API_KEY or artifact paths' => function (): bool {
+        $views = file_get_contents(base_path('resources/views/public/index.php')) . file_get_contents(base_path('resources/views/public/historical.php')) . file_get_contents(base_path('resources/views/public/forecast.php'));
+        return !str_contains($views, 'ML_API_KEY')
+            && !str_contains($views, 'model_path')
+            && !str_contains($views, 'scaler_path')
+            && !str_contains($views, 'metadata_path');
+    },
     'ML API client exposes train and predict' => function (): bool {
         return method_exists(App\Services\MlApiClient::class, 'train')
             && method_exists(App\Services\MlApiClient::class, 'predict')
@@ -72,6 +92,18 @@ $checks = [
         $source = file_get_contents(base_path('app/Repositories/PredictionRepository.php')) ?: '';
         return str_contains($source, 'count($window) !== $expectedWindowSize')
             && str_contains($source, 'prediction_inputs');
+    },
+    'dashboard historical chart is range based, not latest 30 only' => function (): bool {
+        $controller = file_get_contents(base_path('app/Controllers/DashboardController.php')) ?: '';
+        $repository = file_get_contents(base_path('app/Repositories/CopperPriceRepository.php')) ?: '';
+        $view = file_get_contents(base_path('resources/views/dashboard/index.php')) ?: '';
+
+        return !str_contains($controller, 'array_slice($prices->orderedClosePrices(), -30)')
+            && str_contains($controller, "'all' => ['label' => 'Semua Data'")
+            && str_contains($controller, 'latestDate()')
+            && str_contains($repository, 'SELECT date, close FROM copper_prices WHERE date >= ? ORDER BY date ASC')
+            && str_contains($view, 'Pergerakan Harga Penutupan Tembaga')
+            && str_contains($view, 'pointRadius: 0');
     },
 ];
 

@@ -6,6 +6,7 @@
 /web/storage/logs/*
 !/web/storage/logs/.gitkeep
 /ml-service/.venv/
+/ml-service/.venv311/
 /ml-service/artifacts/models/*
 !/ml-service/artifacts/models/.gitkeep
 /ml-service/artifacts/scalers/*

@@ -1,0 +1,848 @@
+You are working inside my EXISTING undergraduate thesis repository:
+
+`Faturar/prediksi-tembaga-bigru-ta`
+
+The current system is primarily an admin/internal research application.
+
+I now want to extend it so that the system has TWO usage sides:
+
+1. **Admin side**
+
+   * remains protected by login;
+   * manages dataset;
+   * imports CSV;
+   * trains BiGRU;
+   * manages model versions;
+   * activates model;
+   * views full evaluation;
+   * manages reports;
+   * performs destructive/reset operations.
+
+2. **Public/User side**
+
+   * does NOT manage data;
+   * does NOT train models;
+   * does NOT activate models;
+   * does NOT access admin reports;
+   * can view historical copper price information;
+   * can view the active model prediction;
+   * can choose forecast horizon 1–7 trading periods;
+   * can see P+1 through P+N results;
+   * can view historical + forecast charts;
+   * can view a limited summary of model performance.
+
+IMPORTANT:
+DO NOT rebuild the project.
+DO NOT migrate to Laravel.
+DO NOT introduce React/Vue.
+DO NOT rewrite the ML methodology.
+DO NOT change the BiGRU architecture.
+
+The goal is to make the application more naturally usable by the public while preserving the existing Admin research-management workflow.
+
+# 1. Architecture Decision
+
+Use this approach:
+
+## ADMIN
+
+Protected area.
+
+Existing admin application remains mostly unchanged.
+
+Admin routes may continue to use:
+
+* `/login`
+* `/dashboard`
+* `/prices`
+* `/import`
+* `/models`
+* `/predictions`
+* `/evaluation`
+* `/reports`
+
+## PUBLIC USER
+
+Create public-facing pages that DO NOT require login.
+
+Preferred routes:
+
+* `/`
+* `/forecast`
+* `/historical`
+
+Optional:
+
+* `/about`
+
+Do NOT create full user registration/login unless absolutely necessary.
+
+The public side represents:
+
+`Pengguna Umum`
+
+while the authenticated side represents:
+
+`Admin`
+
+This is preferred over adding a database role system just for viewing predictions.
+
+# 2. Public Homepage
+
+Create/improve `/` as a public landing page.
+
+Title example:
+
+`Sistem Prediksi Harga Tembaga`
+
+Subtitle:
+
+`Informasi historis dan proyeksi harga penutupan tembaga menggunakan Bidirectional Gated Recurrent Unit (BiGRU).`
+
+The homepage should contain:
+
+* latest available Close Price;
+* latest historical date;
+* total historical observations;
+* active model availability/status;
+* latest public forecast summary if available;
+* historical Close Price chart;
+* CTA:
+  `Lihat Prediksi`
+* CTA:
+  `Lihat Data Historis`
+
+Do NOT show admin controls.
+
+# 3. Public Historical Page
+
+Create:
+
+`GET /historical`
+
+Purpose:
+
+Allow public visitors to view historical copper price information.
+
+Display:
+
+* Date
+* Close
+* optionally Open
+* High
+* Low
+* Volume
+
+Do not expose:
+
+* edit
+* delete
+* add
+* import
+* admin actions.
+
+Add date range filtering if the existing repository makes this easy.
+
+Include historical Close Price line chart.
+
+Allow ranges:
+
+* 1 Bulan
+* 3 Bulan
+* 6 Bulan
+* 1 Tahun
+* 5 Tahun
+* Semua Data
+
+The graph must use actual database data.
+
+# 4. Public Forecast Page
+
+Create:
+
+`GET /forecast`
+
+and prediction submission route as appropriate.
+
+Public user can:
+
+* view active BiGRU model;
+* choose horizon 1–7;
+* run recursive multi-step forecast;
+* view result.
+
+Do NOT allow public user to choose arbitrary model versions.
+
+Public forecast MUST always use:
+
+`active successful model`
+
+This prevents confusing public users.
+
+# 5. Forecast Methodology
+
+DO NOT MODIFY.
+
+Model remains:
+
+`30 historical observations -> one BiGRU output`
+
+Architecture remains:
+
+`Input (30,1)`
+→ `Bidirectional GRU 64`
+→ `Dropout 0.2`
+→ `Dense(1)`
+
+For horizon > 1:
+
+use existing recursive multi-step forecasting implementation.
+
+Example:
+
+P+1:
+30 historical observations → prediction
+
+P+2:
+29 historical observations + P+1 → prediction
+
+Continue up to max P+7.
+
+Do NOT retrain the model during public prediction.
+
+Do NOT refit scaler.
+
+# 6. Public Forecast UI
+
+Use a clean public-facing interface.
+
+Display:
+
+## Prediksi Harga Tembaga
+
+Supporting text:
+
+`Model menggunakan data historis harga penutupan untuk menghasilkan proyeksi hingga 7 periode perdagangan ke depan.`
+
+Horizon selector:
+
+* 1 Periode
+* 3 Periode
+* 5 Periode
+* 7 Periode
+
+or numeric selector 1–7.
+
+Do NOT call them:
+
+`Hari`
+
+Use:
+
+`Periode Perdagangan`
+
+# 7. Public Forecast Result
+
+Display:
+
+* active model version or simple public label;
+* input historical period;
+* window size;
+* horizon;
+* generated time;
+* P+1 ... P+N;
+* predicted Close values.
+
+Table example:
+
+| Periode | Prediksi Close |
+| P+1 | ... |
+| P+2 | ... |
+| P+3 | ... |
+
+Do NOT invent calendar dates.
+
+# 8. Public Forecast Chart
+
+Use Chart.js.
+
+Chart:
+
+`Historis dan Proyeksi Harga`
+
+Display:
+
+Historical:
+latest initial window observations.
+
+Forecast:
+P+1 to P+N.
+
+X axis:
+
+actual historical dates
+
+then:
+
+P+1
+P+2
+...
+P+N
+
+Datasets:
+
+* Historis
+* Prediksi
+
+No fake future dates.
+
+# 9. Public Model Evaluation Summary
+
+Public users may see ONLY summary information.
+
+Display:
+
+* MAE
+* RMSE
+* MAPE
+
+from the active model.
+
+Add explanation:
+
+`Metrik evaluasi dihitung pada data uji secara one-step-ahead.`
+
+Do NOT expose:
+
+* internal artifact paths;
+* API key;
+* server paths;
+* detailed model management controls;
+* failed runs;
+* reset features.
+
+# 10. Public Disclaimer
+
+Add a small notice:
+
+`Hasil prediksi merupakan hasil pemodelan berdasarkan data historis dan tidak merupakan rekomendasi investasi atau keputusan perdagangan.`
+
+Keep it concise.
+
+# 11. Admin Area Must Remain Protected
+
+Verify:
+
+* `/dashboard`
+* `/prices`
+* `/import`
+* `/models`
+* `/predictions`
+* `/evaluation`
+* `/reports`
+
+still require authenticated admin.
+
+Do NOT accidentally make existing admin controllers public.
+
+# 12. Navigation
+
+Public navigation:
+
+* Beranda
+* Data Historis
+* Prediksi
+
+Right side:
+
+`Login Admin`
+
+Do NOT show admin sidebar to public users.
+
+Admin navigation remains current sidebar.
+
+Optional after login:
+
+show:
+`Lihat Situs Publik`
+
+# 13. Authentication
+
+Existing login remains Admin authentication.
+
+Do NOT add public registration.
+
+Do NOT create fake public accounts.
+
+The conceptual actors are:
+
+1. Admin
+2. Pengguna Umum
+
+Public user is represented by unauthenticated access.
+
+# 14. Public Controller Structure
+
+Follow existing native PHP architecture.
+
+Preferred new controller(s):
+
+* `PublicController`
+* or `HomeController`
+* `PublicForecastController`
+
+Keep code organized.
+
+Do NOT put SQL directly in views.
+
+Reuse existing:
+
+* CopperPriceRepository
+* ModelRunRepository
+* PredictionWindowService
+* MlApiClient
+
+where safe.
+
+# 15. Public Prediction Persistence
+
+Decide carefully.
+
+Preferred:
+
+Public forecasts may be persisted in the SAME predictions tables if prediction history is important.
+
+If persisted:
+
+add a field or metadata indicating source:
+
+`source = 'public'`
+
+or:
+
+`requested_by_user_id = NULL`
+
+Do NOT invent a user account.
+
+If schema changes are unnecessary, nullable requester is acceptable if already supported.
+
+If current predictions require admin user ID and this complicates things, create the smallest safe schema change.
+
+Do NOT duplicate the whole prediction system.
+
+# 16. Rate Limiting / Abuse Protection
+
+Because `/forecast` becomes public, prevent easy abuse.
+
+Do NOT introduce Redis.
+
+Use a simple lightweight method if practical.
+
+Examples:
+
+* session-based cooldown;
+* server-side simple per-session timestamp;
+* disable repeated submit briefly in UI.
+
+Example:
+
+allow one prediction request every 5–10 seconds per session.
+
+Do NOT over-engineer.
+
+If not feasible in current architecture, document it as an optional security enhancement.
+
+# 17. FastAPI Must Stay Private Behind PHP
+
+Public browser MUST NOT call FastAPI directly.
+
+Correct:
+
+Public browser
+→ PHP
+→ FastAPI
+
+Incorrect:
+
+Browser JavaScript
+→ FastAPI directly.
+
+API key must remain server-side.
+
+# 18. Database / Security
+
+Public views must use read-only repository methods.
+
+Never expose:
+
+* password hashes;
+* API keys;
+* model artifact paths;
+* metadata filesystem paths;
+* internal exception stack traces.
+
+Use existing HTML escaping helpers.
+
+CSRF must still protect POST forecast actions if current security architecture supports it.
+
+# 19. Dashboard / Admin Terminology
+
+On admin side, rename/explain the actor more clearly if needed.
+
+Use:
+
+`Admin`
+
+with description:
+
+`Pengelola data dan model`
+
+Do NOT call Admin an investor.
+
+# 20. Public User Terminology
+
+Use:
+
+`Pengguna Umum`
+
+Description:
+
+`Pengguna yang mengakses informasi historis dan hasil prediksi harga tembaga.`
+
+# 21. Use Case Alignment
+
+The new conceptual Use Case should become:
+
+## Admin
+
+* Login
+* Dashboard
+* Kelola Data Harga
+* Import CSV
+* Training Model
+* Manajemen Model
+* Prediksi
+* Riwayat Prediksi
+* Evaluasi
+* Laporan
+* Logout
+
+## Pengguna Umum
+
+* Melihat Beranda
+* Melihat Data Historis
+* Melihat Grafik Historis
+* Memilih Horizon Prediksi
+* Menjalankan Prediksi
+* Melihat Hasil Prediksi
+* Melihat Grafik Proyeksi
+* Melihat Ringkasan Evaluasi
+
+Do not implement UML image generation unless documentation already includes text-based UML files that need updating.
+
+# 22. Public UI Design
+
+Reuse current visual identity:
+
+* Plus Jakarta Sans if currently used;
+* green accent;
+* white cards;
+* existing CSS variables;
+* restrained dashboard-style visual language.
+
+But public page should feel simpler than admin.
+
+Do NOT reuse the admin sidebar for public.
+
+Use a normal top navigation bar.
+
+# 23. Homepage Layout Suggestion
+
+Preferred:
+
+---
+
+NAVBAR
+
+Logo / Sistem Prediksi Harga Tembaga
+
+Beranda | Data Historis | Prediksi | Login Admin
+
+---
+
+HERO
+
+Prediksi Harga Tembaga Menggunakan BiGRU
+
+Lihat perkembangan harga historis dan proyeksi hingga 7 periode perdagangan.
+
+[ Lihat Prediksi ] [ Data Historis ]
+
+---
+
+SUMMARY
+
+Harga Terakhir
+Tanggal Terakhir
+Total Data
+MAPE Model Aktif
+
+---
+
+HISTORICAL CHART
+
+Pergerakan Harga Penutupan Tembaga
+
+---
+
+FORECAST CTA
+
+Ingin melihat proyeksi periode berikutnya?
+
+[ Mulai Prediksi ]
+
+---
+
+DISCLAIMER
+
+---
+
+# 24. Admin Login Link
+
+Public navbar:
+
+`Login Admin`
+
+must go to:
+
+`/login`
+
+After login:
+
+existing admin workflow remains.
+
+# 25. Empty State
+
+If there is no active model:
+
+Public Forecast page must NOT crash.
+
+Show:
+
+`Model prediksi belum tersedia. Silakan mencoba kembali setelah model selesai disiapkan oleh Admin.`
+
+If dataset insufficient:
+
+show a friendly public message.
+
+Do not expose internal error text.
+
+# 26. ML Service Offline
+
+Public user message:
+
+`Layanan prediksi sedang tidak tersedia. Silakan coba kembali.`
+
+Admin may still see more detailed diagnostics.
+
+Do NOT expose FastAPI internal exception.
+
+# 27. Public Prediction History
+
+Do NOT expose full global admin prediction history publicly.
+
+Public page should show only:
+
+* the forecast result generated in the current interaction;
+
+OR optionally:
+
+* latest general forecast summary.
+
+Do NOT show a table containing every prior admin/public prediction unless explicitly justified.
+
+# 28. Reports
+
+Public user does NOT access admin reports.
+
+Keep `/reports` admin-only.
+
+Do not create public print reports in this task.
+
+# 29. Evaluation Page
+
+Existing admin Evaluation page remains unchanged.
+
+Public evaluation is only a small summary card from active model metrics.
+
+# 30. README / Documentation
+
+Update README with:
+
+## User-facing architecture
+
+`Pengguna Umum`
+→ Public PHP pages
+→ forecast request
+→ PHP
+→ FastAPI
+
+and:
+
+`Admin`
+→ protected PHP admin pages
+→ data/model management.
+
+Explain that:
+
+Public user does not directly manage ML models.
+
+# 31. Tests
+
+Add/update lightweight tests where practical.
+
+Verify:
+
+1. `/` accessible without login
+2. `/historical` accessible without login
+3. `/forecast` accessible without login
+4. `/dashboard` redirects/rejects without login
+5. `/models` protected
+6. `/prices` protected
+7. public forecast uses active model only
+8. horizon validation 1–7 works
+9. public cannot submit model version override
+10. public forecast uses PHP→FastAPI
+11. no API key exposed in HTML
+12. no artifact path exposed
+13. no admin destructive buttons on public pages
+14. no active model gives friendly message
+
+# 32. Do Not Change
+
+DO NOT change:
+
+* BiGRU architecture
+* train/test split
+* scaler methodology
+* one-step evaluation
+* recursive multi-step strategy
+* FastAPI architecture
+* MySQL ownership
+* admin model management
+* existing data CRUD
+* admin reports
+* actual-vs-predicted evaluation
+
+# 33. Do Not Add
+
+DO NOT add:
+
+* Laravel
+* React
+* Vue
+* Angular
+* public registration
+* OAuth
+* social login
+* investor portfolios
+* buy/sell recommendation
+* stock trading
+* copper trading API
+* payment
+* complex RBAC library
+* separate Python database access
+
+# 34. Acceptance Criteria
+
+The change is complete when:
+
+[ ] Public homepage exists
+[ ] Public historical page exists
+[ ] Public forecast page exists
+[ ] Public pages work without login
+[ ] Admin pages remain protected
+[ ] Public user can view historical Close chart
+[ ] Public user can select horizon 1–7
+[ ] Public forecast uses active successful model only
+[ ] Public user sees P+1–P+N
+[ ] Public user sees historical + forecast chart
+[ ] No fake calendar future dates
+[ ] Public user sees limited MAE/RMSE/MAPE summary
+[ ] Public user cannot train model
+[ ] Public user cannot activate model
+[ ] Public user cannot edit dataset
+[ ] Public user cannot access reports
+[ ] Public user cannot access admin prediction history
+[ ] FastAPI remains server-to-server
+[ ] API key remains hidden
+[ ] No unrelated architecture rewrite
+
+# 35. Required Workflow
+
+STEP 1:
+Inspect existing repository.
+
+STEP 2:
+Output:
+
+`# PUBLIC USER PATCH PLAN`
+
+Table:
+
+| File | Current State | Change | Risk |
+
+STEP 3:
+Implement.
+
+STEP 4:
+Run PHP/Python tests and syntax checks.
+
+STEP 5:
+Review git diff.
+
+STEP 6:
+Return:
+
+# IMPLEMENTATION SUMMARY
+
+## Public Features Added
+
+## Admin Features Preserved
+
+## Routes
+
+Table:
+
+| Route | Access | Function |
+
+## Modified Files
+
+## Security Review
+
+## Tests
+
+## Manual Verification
+
+Test these scenarios:
+
+1. open `/` without login;
+2. view historical graph;
+3. open forecast;
+4. forecast 1 period;
+5. forecast 5 periods;
+6. try 8 periods;
+7. open `/models` logged out;
+8. admin login;
+9. verify admin pages still work.
+
+## BAB III / BAB IV Changes Required
+
+Tell me exactly which thesis sections now need updating because the system has:
+
+* Admin
+* Pengguna Umum
+
+Do NOT commit unless explicitly requested.
+
+Start by inspecting the latest repository first.

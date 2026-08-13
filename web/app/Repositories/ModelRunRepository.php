@@ -24,12 +24,14 @@ final class ModelRunRepository
         $models = $pdo->query('SELECT model_path, scaler_path, metadata_path FROM model_runs')->fetchAll();
 
         $pdo->beginTransaction();
+        $pdo->exec('DELETE po FROM prediction_outputs po JOIN predictions p ON p.id = po.prediction_id');
         $pdo->exec('DELETE pi FROM prediction_inputs pi JOIN predictions p ON p.id = pi.prediction_id');
         $pdo->exec('DELETE FROM predictions');
         $pdo->exec('DELETE FROM model_metrics');
         $pdo->exec('DELETE FROM model_runs');
         $pdo->commit();
 
+        $pdo->exec('ALTER TABLE prediction_outputs AUTO_INCREMENT = 1');
         $pdo->exec('ALTER TABLE prediction_inputs AUTO_INCREMENT = 1');
         $pdo->exec('ALTER TABLE predictions AUTO_INCREMENT = 1');
         $pdo->exec('ALTER TABLE model_metrics AUTO_INCREMENT = 1');
@@ -48,9 +50,45 @@ final class ModelRunRepository
         return $row ?: null;
     }
 
+    public function activeWithMetrics(): ?array
+    {
+        $row = Database::connection()->query(
+            'SELECT m.*, mm.mae, mm.rmse, mm.mape
+             FROM model_runs m
+             LEFT JOIN model_metrics mm ON mm.model_run_id = m.id
+             WHERE m.is_active = 1 AND m.status = "success"
+             ORDER BY m.trained_at DESC
+             LIMIT 1'
+        )->fetch();
+
+        return $row ?: null;
+    }
+
     public function successful(): array
     {
         return Database::connection()->query('SELECT * FROM model_runs WHERE status = "success" ORDER BY is_active DESC, trained_at DESC, created_at DESC')->fetchAll();
+    }
+
+    public function find(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM model_runs WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function findWithMetrics(int $id): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT m.*, mm.train_samples, mm.test_samples, mm.final_training_loss, mm.final_validation_loss, mm.mae, mm.rmse, mm.mape, mm.training_duration_seconds
+             FROM model_runs m
+             LEFT JOIN model_metrics mm ON mm.model_run_id = m.id
+             WHERE m.id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
     }
 
     public function findSuccessful(int $id): ?array

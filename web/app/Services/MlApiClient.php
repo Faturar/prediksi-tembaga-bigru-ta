@@ -20,7 +20,7 @@ final class MlApiClient
 
     public function train(array $payload): array
     {
-        return $this->request('POST', '/api/train', $payload);
+        return $this->request('POST', '/api/train', $payload, $this->config['ml_api_train_timeout']);
     }
 
     public function predict(array $payload): array
@@ -33,13 +33,14 @@ final class MlApiClient
         return $this->request('GET', '/api/models/' . rawurlencode($version));
     }
 
-    private function request(string $method, string $path, array $payload = []): array
+    private function request(string $method, string $path, array $payload = [], ?int $timeout = null): array
     {
         $ch = curl_init(rtrim($this->config['ml_api_url'], '/') . $path);
         $headers = ['Accept: application/json', 'X-API-Key: ' . $this->config['ml_api_key']];
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => $this->config['ml_api_timeout'],
+            CURLOPT_TIMEOUT => $timeout ?? $this->config['ml_api_timeout'],
+            CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_CUSTOMREQUEST => $method,
         ]);
         if ($method !== 'GET') {

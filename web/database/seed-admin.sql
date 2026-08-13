@@ -1,7 +1,7 @@
 USE copper_bigru;
 
 INSERT INTO users (name, email, password, created_at, updated_at)
-VALUES ('Admin', 'admin@example.com', '$2y$10$ZDKp3YlL7Gc6TeIZaCdtl.XD/18rRNqyY0CBOvgCFTzWHxRofhxw.', NOW(), NOW())
+VALUES ('Admin', 'admin@gmail.com', '$2y$10$gARa72wy5F4HgXCU/uUY5.tfYMtpM56zW5WO3zkp4/hLWADzn982K', NOW(), NOW())
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     password = VALUES(password),

@@ -55,7 +55,7 @@
             <tbody>
             <?php foreach ($rows as $row): ?>
                 <tr>
-                    <td data-label="Tanggal"><?= e($row['date']) ?></td>
+                    <td data-label="Tanggal"><?= e(format_indonesian_date($row['date'] ?? null)) ?></td>
                     <td data-label="Open"><?= e($row['open']) ?></td>
                     <td data-label="High"><?= e($row['high']) ?></td>
                     <td data-label="Low"><?= e($row['low']) ?></td>

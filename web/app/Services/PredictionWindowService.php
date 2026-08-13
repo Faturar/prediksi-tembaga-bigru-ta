@@ -6,6 +6,19 @@ namespace App\Services;
 
 final class PredictionWindowService
 {
+    public const MIN_HORIZON = 1;
+    public const MAX_HORIZON = 7;
+
+    public function validateHorizon(mixed $value): int
+    {
+        $horizon = filter_var($value ?? self::MIN_HORIZON, FILTER_VALIDATE_INT);
+        if ($horizon === false || $horizon < self::MIN_HORIZON || $horizon > self::MAX_HORIZON) {
+            throw new \InvalidArgumentException('Horizon prediksi harus berada pada rentang 1 sampai 7 periode perdagangan.');
+        }
+
+        return $horizon;
+    }
+
     public function build(array $orderedRows, int $windowSize): array
     {
         if ($windowSize < 1) {

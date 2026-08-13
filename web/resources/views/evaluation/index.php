@@ -103,7 +103,7 @@ $bestMaeRow = $metricCount ? array_reduce($metrics, fn ($best, $row) => $best ==
                     <td data-label="RMSE"><?= e($row['rmse']) ?></td>
                     <td data-label="MAPE"><?= e($row['mape']) ?>%</td>
                     <td data-label="Durasi"><?= e($row['training_duration_seconds']) ?>s</td>
-                    <td data-label="Trained"><?= e($row['trained_at'] ?? '-') ?></td>
+                    <td data-label="Trained"><?= e(format_indonesian_date($row['trained_at'] ?? null, true)) ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
@@ -113,6 +113,21 @@ $bestMaeRow = $metricCount ? array_reduce($metrics, fn ($best, $row) => $best ==
 
 <?php if (!empty($metrics)): ?>
 <script>
+const fullDateFormatter = new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+});
+function formatChartFullDate(label) {
+    if (!label) {
+        return '';
+    }
+
+    const [year, month, day] = String(label).split('-').map(Number);
+    const date = year && month ? new Date(year, month - 1, day || 1) : new Date(label);
+    return Number.isNaN(date.getTime()) ? label : fullDateFormatter.format(date);
+}
+
 <?php if (!empty($testSeries)): ?>
 const testSeriesRows = <?= json_encode($testSeries, JSON_THROW_ON_ERROR) ?>;
 new Chart(document.getElementById('actualPredictedChart'), {
@@ -127,8 +142,30 @@ new Chart(document.getElementById('actualPredictedChart'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index', intersect: false } },
-        scales: { x: { ticks: { autoSkip: true, maxRotation: 0 } }, y: { beginAtZero: false } }
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    title(items) {
+                        return formatChartFullDate(items[0]?.label || '');
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    autoSkip: true,
+                    maxRotation: 0,
+                    callback(value) {
+                        return formatChartFullDate(this.getLabelForValue(value));
+                    }
+                }
+            },
+            y: { beginAtZero: false }
+        }
     }
 });
 <?php endif; ?>

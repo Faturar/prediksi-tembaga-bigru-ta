@@ -1,3 +1,5 @@
+<?php $hasRunningModel = !empty(array_filter($models, fn ($model) => ($model['status'] ?? '') === 'running')); ?>
+
 <form method="post" action="/models/train" class="grid-form model-form">
     <?= csrf_field() ?>
     <label class="field-window">Window <input type="number" name="window_size" value="30" min="2" required></label>
@@ -8,6 +10,13 @@
     <label class="field-learning">Learning Rate <input type="number" step="0.0001" name="learning_rate" value="0.001"></label>
     <button type="submit" class="full-width-button">Train Model</button>
 </form>
+
+<?php if ($hasRunningModel): ?>
+<section class="panel training-running-panel">
+    <strong>Training sedang berjalan.</strong>
+    <p>Proses training berjalan di background. Buka tombol Lihat Log pada model berstatus running untuk memantau tahap training.</p>
+</section>
+<?php endif; ?>
 
 <section class="panel">
     <div class="section-head">
@@ -24,26 +33,20 @@
     </div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Version</th><th>Status</th><th>Aktif</th><th>Window</th><th>Units</th><th>Dropout</th><th>Batch</th><th>Epoch</th><th>LR</th><th>Dataset</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>Trained</th><th>Keterangan</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Version</th><th>Status</th><th>Aktif</th><th>MAPE</th><th>Trained</th><th>Aksi</th></tr></thead>
             <tbody>
             <?php foreach ($models as $model): ?>
                 <tr>
                     <td data-label="Version"><?= e($model['version']) ?></td>
-                    <td data-label="Status"><?= e($model['status']) ?></td>
+                    <td data-label="Status"><span class="status-pill <?= $model['status'] === 'success' ? 'ok' : ($model['status'] === 'running' ? 'warn' : '') ?>"><?= e($model['status']) ?></span></td>
                     <td data-label="Aktif"><?= $model['is_active'] ? 'Ya' : '-' ?></td>
-                    <td data-label="Window"><?= e($model['window_size']) ?></td>
-                    <td data-label="Units"><?= e($model['units']) ?></td>
-                    <td data-label="Dropout"><?= e($model['dropout']) ?></td>
-                    <td data-label="Batch"><?= e($model['batch_size']) ?></td>
-                    <td data-label="Epoch"><?= e($model['actual_epochs'] ?? $model['configured_epochs']) ?></td>
-                    <td data-label="LR"><?= e($model['learning_rate']) ?></td>
-                    <td data-label="Dataset"><?= $model['dataset_start_date'] && $model['dataset_end_date'] ? e($model['dataset_start_date'] . ' - ' . $model['dataset_end_date']) : '-' ?></td>
-                    <td data-label="MAE"><?= e($model['mae'] ?? '-') ?></td>
-                    <td data-label="RMSE"><?= e($model['rmse'] ?? '-') ?></td>
                     <td data-label="MAPE"><?= isset($model['mape']) ? e($model['mape']) . '%' : '-' ?></td>
-                    <td data-label="Trained"><?= e($model['trained_at']) ?></td>
-                    <td data-label="Keterangan"><?= $model['status'] === 'failed' ? e($model['error_message'] ?? '-') : '-' ?></td>
+                    <td data-label="Trained"><?= e(format_indonesian_date($model['trained_at'] ?? null, true)) ?></td>
                     <td data-label="Aksi">
+                        <a class="button-secondary table-action-button" href="/models/detail?id=<?= e($model['id']) ?>">Detail</a>
+                        <?php if ($model['has_log']): ?>
+                            <a class="button-secondary table-action-button" href="/models/log?id=<?= e($model['id']) ?>">Lihat Log</a>
+                        <?php endif; ?>
                         <?php if ($model['status'] === 'success' && !$model['is_active']): ?>
                             <form method="post" action="/models/activate" class="inline-form">
                                 <?= csrf_field() ?><input type="hidden" name="id" value="<?= e($model['id']) ?>">
@@ -57,3 +60,9 @@
         </table>
     </div>
 </section>
+
+<?php if ($hasRunningModel): ?>
+<script>
+setTimeout(() => window.location.reload(), 15000);
+</script>
+<?php endif; ?>

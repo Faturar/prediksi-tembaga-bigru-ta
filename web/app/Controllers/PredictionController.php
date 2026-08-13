@@ -49,18 +49,25 @@ final class PredictionController extends Controller
             $_SESSION['flash_error'] = 'Pilih model training yang sudah sukses untuk menjalankan prediksi.';
             $this->redirect('/predictions');
         }
+        $windowService = new PredictionWindowService();
+        try {
+            $horizon = $windowService->validateHorizon($_POST['horizon'] ?? 1);
+        } catch (\InvalidArgumentException $e) {
+            $_SESSION['flash_error'] = $e->getMessage();
+            $this->redirect('/predictions');
+        }
         $orderedRows = (new CopperPriceRepository())->orderedClosePrices();
         try {
-            $window = (new PredictionWindowService())->build($orderedRows, (int) $model['window_size']);
+            $window = $windowService->build($orderedRows, (int) $model['window_size']);
         } catch (\LengthException $e) {
             $_SESSION['flash_error'] = $e->getMessage();
             $this->redirect('/predictions');
         }
 
         try {
-            $result = (new MlApiClient())->predict(['model_version' => $model['version'], 'window' => $window]);
+            $result = (new MlApiClient())->predict(['model_version' => $model['version'], 'window' => $window, 'horizon' => $horizon]);
             (new PredictionRepository())->create((int) $model['id'], $result, $window, (int) $model['window_size']);
-            $_SESSION['flash_success'] = 'Hasil Prediksi Periode Perdagangan Berikutnya berhasil disimpan.';
+            $_SESSION['flash_success'] = "Hasil prediksi {$horizon} periode perdagangan berhasil disimpan.";
         } catch (\Throwable $e) {
             $_SESSION['flash_error'] = 'Prediksi gagal: ' . $this->predictionError($e->getMessage());
         }
