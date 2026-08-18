@@ -1,0 +1,12 @@
+4.6	Arsitektur Sistem Prediksi Harga Tembaga	Diagram arsitektur	Gambarkan alur Pengguna/Admin → PHP Web → MySQL, kemudian PHP → FastAPI → TensorFlow/Keras BiGRU + Model/Scaler → PHP → User. Browser jangan digambarkan mengakses FastAPI langsung.
+7	4.7	Class Diagram / ERD Sistem	Diagram UML/ERD	Buat hubungan tabel: users, copper_prices, import_histories, model_runs, model_metrics, predictions, prediction_inputs, prediction_outputs. Atribut utama dan relasi/foreign key harus terlihat.
+8	4.8	Use Case Diagram Sistem	Diagram UML	Aktor minimal Admin dan Pengunjung/Pengguna Umum. Admin: login, kelola data, import CSV, training/manajemen model, prediksi, evaluasi, laporan. Pengunjung: lihat data historis dan lakukan prediksi publik.
+9	4.9	Activity Diagram Login	Activity Diagram	Alur: buka login → isi email/password → validasi → decision valid/tidak → jika valid dashboard, jika tidak tampilkan error → selesai.
+10	4.10	Activity Diagram Import Data Harga	Activity Diagram	Login Admin → Data Harga/Import → pilih CSV → upload → validasi format → proses parsing → simpan/update data → tampilkan ringkasan import → selesai.
+11	4.11	Activity Diagram Training Model BiGRU	Activity Diagram	Admin pilih training → sistem ambil data → preprocessing → normalisasi → sliding window → split train/test → training BiGRU → simpan .keras dan scaler → evaluasi → simpan model run → selesai.
+12	4.12	Activity Diagram Prediksi	Activity Diagram	Buka Prediksi → model aktif tersedia? → pilih horizon 1–7 → ambil 30 data terakhir → request ke FastAPI → prediksi recursive → denormalisasi → simpan hasil → tampilkan P+1…P+N dan grafik.
+13	4.13	Activity Diagram Pencetakan Laporan	Activity Diagram	Admin → menu Laporan → pilih jenis laporan → tentukan filter → sistem mengambil data → tampilkan laporan → klik Print → print preview/browser → cetak/simpan PDF.
+14	4.14	Sequence Diagram Training Model	Sequence Diagram	Actor Admin, UI/View, PHP Controller/Service, Repository/MySQL, FastAPI, Model Training/Model Artifact. Tunjukkan request training sampai hasil disimpan.
+15	4.15	Sequence Diagram Proses Prediksi	Sequence Diagram	Pengguna/Admin → UI → PHP → database untuk data/model → FastAPI → model BiGRU → hasil JSON → PHP → simpan history → tampilkan prediksi.
+
+buatkan diagram diagramnya dari semua hal di website buat folder hasil output pembuatan diagram

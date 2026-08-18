@@ -139,6 +139,11 @@ class TrainingService:
                 verbose=0,
                 callbacks=[training_progress_callback(request.version, request.epochs)],
             )
+            training_history = {
+                "loss": [float(value) for value in history.history.get("loss", [])],
+            }
+            if "val_loss" in history.history:
+                training_history["val_loss"] = [float(value) for value in history.history.get("val_loss", [])]
             logger.info("[TRAIN][SAVE_MODEL] version=%s path=%s", request.version, paths["model"])
             write_training_log(request.version, f"[TRAIN][SAVE_MODEL] version={request.version} path={paths['model']}")
             model.save(paths["model"])
@@ -199,6 +204,7 @@ class TrainingService:
                     "final_training_loss": final_training_loss,
                     "final_validation_loss": final_validation_loss,
                 },
+                "training_history": training_history,
                 "test_series": [
                     {
                         "date": test_dates[i],

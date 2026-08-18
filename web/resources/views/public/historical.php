@@ -97,8 +97,8 @@ new Chart(document.getElementById('historicalCloseChart'), {
         datasets: [{
             label: 'Close Price',
             data: <?= json_encode($values, JSON_THROW_ON_ERROR) ?>,
-            borderColor: '#047857',
-            backgroundColor: 'rgba(16,185,129,0.12)',
+            borderColor: '#c06b32',
+            backgroundColor: 'rgba(192,107,50,0.12)',
             tension: 0.25,
             pointRadius: 0,
             fill: true,

@@ -8,7 +8,7 @@ $latestPrediction = $predictions[0] ?? null;
         <div>
             <p class="eyebrow">Prediksi</p>
             <h2>Periode Perdagangan Berikutnya</h2>
-            <p class="card-note">Gunakan model terlatih untuk memprediksi satu periode berikutnya.</p>
+            <p class="card-note">Gunakan model terlatih untuk memprediksi satu observasi perdagangan berikutnya.</p>
         </div>
         <?php if ($activeModel): ?>
             <span class="model-active-chip">Aktif: <?= e($activeModel['version']) ?></span>
@@ -93,22 +93,20 @@ $latestPrediction = $predictions[0] ?? null;
 .model-selector-row { display:flex; align-items:flex-end; gap:12px; }
 .model-select-field { display:flex; flex-direction:column; gap:6px; flex:1; }
 .model-select-field span { color:var(--muted); font-size:12px; font-weight:800; text-transform:uppercase; }
-.model-select-field select {
-    width:100%; border:1px solid var(--line); border-radius:10px; background:#fff; padding:10px 12px; font-size:14px; font-weight:600; color:var(--ink);
-}
+.model-select-field select { width:100%; border:1px solid var(--line); border-radius:var(--radius); background:#fff; padding:10px 12px; font-size:14px; font-weight:600; color:var(--ink); }
 .prediction-submit { white-space:nowrap; }
 .selected-model-summary {
-    display:flex; justify-content:space-between; align-items:center; gap:12px; border:1px solid var(--line); border-radius:12px; background:var(--panel-soft); padding:12px 14px;
+    display:flex; justify-content:space-between; align-items:center; gap:12px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel-soft); padding:12px 14px;
 }
 .selected-model-summary > div { display:flex; flex-direction:column; gap:4px; }
 .selected-model-summary span { color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; }
 .selected-model-summary strong { font-size:18px; }
 .selected-status-pill {
-    display:inline-flex; align-items:center; justify-content:center; height:30px; padding:0 10px; border-radius:999px; border:1px solid rgba(13,148,136,.25); background:rgba(13,148,136,.08); color:var(--primary); font-weight:800; font-size:12px;
+    display:inline-flex; align-items:center; justify-content:center; height:30px; padding:0 10px; border-radius:var(--radius); border:1px solid rgba(192,107,50,.28); background:rgba(192,107,50,.1); color:var(--accent-dark); font-weight:800; font-size:12px;
 }
 .model-detail-grid, .data-detail-grid { display:grid; gap:12px; grid-template-columns: repeat(4, minmax(0,1fr)); }
 .model-detail-grid > div, .data-detail-grid > div {
-    border:1px solid var(--line); border-radius:12px; background:var(--panel-soft); padding:12px 14px;
+    border:1px solid var(--line); border-radius:var(--radius); background:var(--panel-soft); padding:12px 14px;
 }
 .model-detail-grid span, .data-detail-grid span { display:block; color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; margin-bottom:6px; }
 .model-detail-grid strong, .data-detail-grid strong { display:block; color:var(--ink); font-size:14px; line-height:1.5; }
@@ -194,23 +192,3 @@ if (modelSelect) {
         </table>
     </div>
 </section>
-
-<script>
-const modelSelect = document.getElementById('prediction-model-select');
-if (modelSelect) {
-    const fields = document.querySelectorAll('[data-model-detail]');
-    const selectedFields = document.querySelectorAll('[data-selected-model]');
-    const updateModelDetails = () => {
-        const option = modelSelect.selectedOptions[0];
-        fields.forEach((field) => {
-            const key = field.dataset.modelDetail;
-            field.textContent = option.dataset[key] || '-';
-        });
-        selectedFields.forEach((field) => {
-            const key = field.dataset.selectedModel;
-            field.textContent = option.dataset[key] || '-';
-        });
-    };
-    modelSelect.addEventListener('change', updateModelDetails);
-}
-</script>

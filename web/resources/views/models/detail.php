@@ -1,5 +1,6 @@
 <?php
 $version = $model['version'];
+$modelName = $model['model_name'] ?? 'BiGRU';
 $status = $model['status'];
 $isActive = $model['is_active'];
 $trainedAt = $model['trained_at'];
@@ -35,7 +36,7 @@ $showChart = !empty($testSeries);
     <div class="section-head">
         <div>
             <p class="eyebrow">Model BiGRU</p>
-            <h2><?= e($version) ?></h2>
+            <h2><?= e($modelName) ?></h2>
             <p class="card-note">Detail konfigurasi, dataset, evaluasi, dan training.</p>
         </div>
         <div class="training-log-actions">
@@ -48,6 +49,7 @@ $showChart = !empty($testSeries);
 
     <div class="model-detail-grid">
         <div><span>Trained at</span><strong><?= e(format_indonesian_date($trainedAt ?? null, true)) ?></strong></div>
+        <div><span>Nama Model</span><strong><?= e($modelName) ?></strong></div>
         <div><span>Version</span><strong><?= e($version) ?></strong></div>
         <div><span>Status</span><strong><?= e($status) ?></strong></div>
         <div><span>Aktif</span><strong><?= $isActive ? 'Ya' : 'Tidak' ?></strong></div>

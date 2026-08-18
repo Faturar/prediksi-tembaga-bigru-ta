@@ -1,0 +1,17 @@
+Gambar 4.1:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-1?screenshot=1
+
+Gambar 4.2:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-2?screenshot=1
+
+Gambar 4.3:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-3?screenshot=1
+
+Gambar 4.4:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-4?screenshot=1
+
+Gambar 4.5:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-5?screenshot=1
+
+http://localhost:8000/admin/dokumentasi-penelitian
+http://localhost:8000/admin/dokumentasi-penelitian?screenshot=1

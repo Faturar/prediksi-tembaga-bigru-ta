@@ -53,7 +53,7 @@ final class ModelRunRepository
     public function activeWithMetrics(): ?array
     {
         $row = Database::connection()->query(
-            'SELECT m.*, mm.mae, mm.rmse, mm.mape
+            'SELECT m.*, mm.train_samples, mm.test_samples, mm.final_training_loss, mm.final_validation_loss, mm.mae, mm.rmse, mm.mape, mm.training_duration_seconds
              FROM model_runs m
              LEFT JOIN model_metrics mm ON mm.model_run_id = m.id
              WHERE m.is_active = 1 AND m.status = "success"
@@ -101,8 +101,8 @@ final class ModelRunRepository
 
     public function createPending(array $data): int
     {
-        $stmt = Database::connection()->prepare('INSERT INTO model_runs (version, status, requested_by, window_size, units, dropout, batch_size, configured_epochs, learning_rate, created_at, updated_at) VALUES (?, "running", ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())');
-        $stmt->execute([$data['version'], $data['requested_by'], $data['window_size'], $data['units'], $data['dropout'], $data['batch_size'], $data['epochs'], $data['learning_rate']]);
+        $stmt = Database::connection()->prepare('INSERT INTO model_runs (version, model_name, status, requested_by, window_size, units, dropout, batch_size, configured_epochs, learning_rate, created_at, updated_at) VALUES (?, ?, "running", ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())');
+        $stmt->execute([$data['version'], $data['model_name'], $data['requested_by'], $data['window_size'], $data['units'], $data['dropout'], $data['batch_size'], $data['epochs'], $data['learning_rate']]);
         return (int) Database::connection()->lastInsertId();
     }
 

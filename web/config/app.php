@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'name' => env('APP_NAME', 'Prediksi Harga Tembaga'),
+    'name' => env('APP_NAME', 'PreTem'),
     'debug' => filter_var(env('APP_DEBUG', 'true'), FILTER_VALIDATE_BOOLEAN),
     'url' => env('APP_URL', 'http://localhost:8000'),
     'ml_api_url' => env('ML_API_URL', 'http://127.0.0.1:8001'),

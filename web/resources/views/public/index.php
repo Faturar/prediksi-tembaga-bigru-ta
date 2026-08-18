@@ -13,8 +13,8 @@ $formatDate = static fn ($value): string => format_indonesian_date($value);
 $formatTanggalIndonesia = static fn (?string $date, bool $withTime = false): string => format_indonesian_date($date, $withTime);
 ?><section class="hero-card">
     <div>
-        <p class="eyebrow">Sistem Prediksi Harga Tembaga</p>
-        <h1>Informasi historis dan proyeksi harga penutupan tembaga menggunakan BiGRU</h1>
+        <p class="eyebrow">PreTem</p>
+        <h1>Prediksi harga penutupan tembaga berbasis BiGRU</h1>
         <p>Temukan data historis dan perkiraan prediksi hingga 7 periode perdagangan berikutnya.</p>
         <div class="hero-actions"><a class="button-primary" href="/forecast">Lihat Prediksi</a><a
                 class="button-secondary" href="/historical">Lihat Data Historis</a></div>
@@ -105,8 +105,8 @@ new Chart(document.getElementById('publicHomeChart'), {
             datasets: [{
                     label: 'Close Price',
                     data: homeChartData,
-                    borderColor: '#047857',
-                    backgroundColor: 'rgba(16,185,129,0.12)',
+                    borderColor: '#c06b32',
+                    backgroundColor: 'rgba(192,107,50,0.12)',
                     tension: 0.25,
                     pointRadius: 0,
                     fill: true,

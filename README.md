@@ -11,6 +11,18 @@ Native PHP + FastAPI monorepo untuk tugas akhir: "Prediksi Harga Komoditas Temba
 
 Python bertanggung jawab atas preprocessing, normalisasi MinMaxScaler, sliding window, training BiGRU, prediksi, denormalisasi, metrik, dan artifact model/scaler/metadata.
 
+## Modul Aplikasi
+
+- Dashboard admin untuk ringkasan dataset, status ML service, model aktif, dan grafik harga historis.
+- Manajemen data harga tembaga (`copper_prices`) dengan input manual, edit, hapus, dan import CSV.
+- Manajemen training model BiGRU dengan konfigurasi window, units, dropout, batch size, epoch, learning rate, serta nama model custom.
+- Nama model dapat dikosongkan saat training; sistem otomatis membuat nama berbasis konfigurasi dan waktu training. `version` tetap dibuat otomatis untuk traceability artifact, log, dan metadata.
+- Riwayat model memakai `model_runs` dan `model_metrics`, termasuk status aktif, metrik MAE/RMSE/MAPE, periode dataset, train/test samples, dan artifact metadata.
+- Prediksi memakai model aktif dan menyimpan input/output prediksi untuk menjaga traceability.
+- Evaluasi menampilkan metrik dan perbandingan aktual vs prediksi dari test series model.
+- Laporan dan halaman publik untuk data historis serta prediksi.
+- Modul Dokumentasi TA untuk screenshot BAB IV pada route `/admin/dokumentasi-ta`.
+
 ## Metodologi Final
 
 - Input model hanya `Close Price` dengan urutan tanggal ascending.
@@ -22,8 +34,32 @@ Python bertanggung jawab atas preprocessing, normalisasi MinMaxScaler, sliding w
 - `model.fit(..., shuffle=False)` tanpa `validation_split`.
 - Evaluasi memakai MAE, RMSE, dan MAPE setelah inverse transform ke skala harga asli.
 - Prediksi merepresentasikan periode/observasi perdagangan berikutnya, bukan tanggal kalender yang dibuat otomatis.
+- Metadata training menyimpan `test_series` one-step-ahead. Training baru juga menyimpan `training_history.loss`; model lama dapat tetap membaca loss per epoch dari log training jika tersedia.
 
 TensorFlow/Keras wajib tersedia untuk training BiGRU. Gunakan Python 3.11 untuk ML service di Windows karena TensorFlow belum tersedia untuk semua versi Python terbaru. Jika TensorFlow tidak tersedia, training gagal dan tidak ada fallback Linear Regression.
+
+## Dokumentasi Screenshot TA
+
+Halaman dokumentasi khusus admin tersedia untuk mengambil screenshot BAB IV:
+
+```text
+Gambar 4.1:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-1?screenshot=1
+
+Gambar 4.2:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-2?screenshot=1
+
+Gambar 4.3:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-3?screenshot=1
+
+Gambar 4.4:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-4?screenshot=1
+
+Gambar 4.5:
+http://localhost:8000/admin/dokumentasi-ta/gambar-4-5?screenshot=1
+```
+
+Parameter `?screenshot=1` mengaktifkan mode screenshot: sidebar, navbar, tombol aksi, dan elemen non-esensial disembunyikan agar tampilan bersih untuk resolusi desktop.
 
 ## Setup
 

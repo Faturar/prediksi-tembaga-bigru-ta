@@ -14,6 +14,22 @@ final class PredictionRepository
         return $this->attachChildren($rows);
     }
 
+    public function latestForModel(int $modelRunId): ?array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT p.*, m.version, m.window_size
+             FROM predictions p
+             JOIN model_runs m ON m.id = p.model_run_id
+             WHERE p.model_run_id = ?
+             ORDER BY p.created_at DESC, p.id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([$modelRunId]);
+        $rows = $this->attachChildren($stmt->fetchAll());
+
+        return $rows[0] ?? null;
+    }
+
     public function reset(): void
     {
         $pdo = Database::connection();

@@ -2,6 +2,7 @@
 
 <form method="post" action="/models/train" class="grid-form model-form">
     <?= csrf_field() ?>
+    <label class="field-model-name">Nama Model <input type="text" name="model_name" maxlength="100" placeholder="Kosongkan untuk nama otomatis"></label>
     <label class="field-window">Window <input type="number" name="window_size" value="30" min="2" required></label>
     <label class="field-units">Units <input type="number" name="units" value="64" min="1" required></label>
     <label class="field-dropout">Dropout <input type="number" step="0.01" name="dropout" value="0.2" min="0" max="0.9"></label>
@@ -33,10 +34,11 @@
     </div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Version</th><th>Status</th><th>Aktif</th><th>MAPE</th><th>Trained</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Nama Model</th><th>Version</th><th>Status</th><th>Aktif</th><th>MAPE</th><th>Trained</th><th>Aksi</th></tr></thead>
             <tbody>
             <?php foreach ($models as $model): ?>
                 <tr>
+                    <td data-label="Nama Model"><strong><?= e($model['model_name'] ?? 'BiGRU') ?></strong></td>
                     <td data-label="Version"><?= e($model['version']) ?></td>
                     <td data-label="Status"><span class="status-pill <?= $model['status'] === 'success' ? 'ok' : ($model['status'] === 'running' ? 'warn' : '') ?>"><?= e($model['status']) ?></span></td>
                     <td data-label="Aktif"><?= $model['is_active'] ? 'Ya' : '-' ?></td>

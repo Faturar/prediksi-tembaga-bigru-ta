@@ -68,6 +68,18 @@ final class CopperPriceRepository
         return $stmt->fetchAll();
     }
 
+    public function closePricesBetween(?string $startDate, ?string $endDate): array
+    {
+        if ($startDate === null || $endDate === null) {
+            return $this->orderedClosePrices();
+        }
+
+        $stmt = Database::connection()
+            ->prepare('SELECT date, close FROM copper_prices WHERE date BETWEEN ? AND ? ORDER BY date ASC');
+        $stmt->execute([$startDate, $endDate]);
+        return $stmt->fetchAll();
+    }
+
     public function historicalRecords(?string $startDate = null): array
     {
         if ($startDate === null) {
@@ -145,6 +157,42 @@ final class CopperPriceRepository
             'min_close' => null,
             'max_close' => null,
             'avg_close' => null,
+        ];
+    }
+
+    public function preprocessingSummary(): array
+    {
+        $pdo = Database::connection();
+        $summary = $pdo
+            ->query('SELECT COUNT(*) AS total_records, MIN(date) AS start_date, MAX(date) AS end_date, SUM(CASE WHEN close IS NULL OR close <= 0 THEN 1 ELSE 0 END) AS missing_close, SUM(CASE WHEN volume IS NULL THEN 1 ELSE 0 END) AS missing_volume FROM copper_prices')
+            ->fetch() ?: [];
+
+        $duplicateDates = (int) $pdo
+            ->query('SELECT COUNT(*) FROM (SELECT date FROM copper_prices GROUP BY date HAVING COUNT(*) > 1) duplicate_dates')
+            ->fetchColumn();
+
+        $duplicateRecords = (int) $pdo
+            ->query('SELECT COALESCE(SUM(row_count - 1), 0) FROM (SELECT COUNT(*) AS row_count FROM copper_prices GROUP BY date HAVING COUNT(*) > 1) duplicate_rows')
+            ->fetchColumn();
+
+        $firstRow = $pdo
+            ->query('SELECT date, close FROM copper_prices ORDER BY date ASC LIMIT 1')
+            ->fetch() ?: null;
+
+        $lastRow = $pdo
+            ->query('SELECT date, close FROM copper_prices ORDER BY date DESC LIMIT 1')
+            ->fetch() ?: null;
+
+        return [
+            'total_records' => (int) ($summary['total_records'] ?? 0),
+            'start_date' => $summary['start_date'] ?? null,
+            'end_date' => $summary['end_date'] ?? null,
+            'missing_close' => (int) ($summary['missing_close'] ?? 0),
+            'missing_volume' => (int) ($summary['missing_volume'] ?? 0),
+            'duplicate_date_count' => $duplicateDates,
+            'duplicate_record_count' => $duplicateRecords,
+            'first_record' => $firstRow,
+            'last_record' => $lastRow,
         ];
     }
 }

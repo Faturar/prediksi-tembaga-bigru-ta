@@ -126,8 +126,8 @@ new Chart(document.getElementById('forecastChart'), {
             {
                 label: 'Historis',
                 data: forecastHistoricalData,
-                borderColor: '#0f766e',
-                backgroundColor: 'rgba(13,148,136,0.12)',
+                borderColor: '#1f2937',
+                backgroundColor: 'rgba(31,41,55,0.08)',
                 tension: 0.25,
                 pointRadius: 0,
                 fill: false,
@@ -135,8 +135,8 @@ new Chart(document.getElementById('forecastChart'), {
             {
                 label: 'Prediksi',
                 data: forecastPadding,
-                borderColor: '#047857',
-                backgroundColor: 'rgba(22,163,74,0.15)',
+                borderColor: '#c06b32',
+                backgroundColor: 'rgba(192,107,50,0.14)',
                 tension: 0.25,
                 pointRadius: 2,
                 borderDash: [6, 4],

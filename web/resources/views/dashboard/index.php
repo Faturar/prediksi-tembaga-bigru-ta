@@ -348,12 +348,12 @@ new Chart(document.getElementById('dashboardPredictionChart'), {
         datasets: [{
             label: 'Predicted Close',
             data: <?= json_encode($predictionValues, JSON_THROW_ON_ERROR) ?>,
-            borderColor: '#4ade80',
-            backgroundColor: 'rgba(74, 222, 128, 0.12)',
+            borderColor: '#c06b32',
+            backgroundColor: 'rgba(192, 107, 50, 0.12)',
             tension: 0.42,
             fill: true,
             pointRadius: 3,
-            pointBackgroundColor: '#4ade80'
+            pointBackgroundColor: '#c06b32'
         }]
     },
     options: {

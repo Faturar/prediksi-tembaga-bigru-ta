@@ -69,6 +69,7 @@ final class ModelController extends Controller
         $repo = new ModelRunRepository();
         $params = [
             'requested_by' => $_SESSION['user']['id'],
+            'model_name' => $this->modelName($_POST['model_name'] ?? '', $_POST),
             'window_size' => (int) ($_POST['window_size'] ?? 30),
             'units' => (int) ($_POST['units'] ?? 64),
             'dropout' => (float) ($_POST['dropout'] ?? 0.2),
@@ -157,6 +158,23 @@ final class ModelController extends Controller
             $dropout,
             $params['epochs'],
             date('ymdHis')
+        );
+    }
+
+    private function modelName(mixed $value, array $post): string
+    {
+        $name = trim((string) $value);
+        $name = preg_replace('/\s+/', ' ', $name) ?: '';
+        if ($name !== '') {
+            return substr($name, 0, 100);
+        }
+
+        return sprintf(
+            'BiGRU W%d U%d E%d - %s',
+            (int) ($post['window_size'] ?? 30),
+            (int) ($post['units'] ?? 64),
+            (int) ($post['epochs'] ?? 50),
+            date('d/m/Y H:i')
         );
     }
 

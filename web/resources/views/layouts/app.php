@@ -2,6 +2,7 @@
 $user = $_SESSION['user'] ?? null;
 $appName = config('app')['name'];
 $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$isScreenshotMode = in_array(($_GET['screenshot'] ?? ''), ['1', 'table', 'chart'], true);
 $flashError = $_SESSION['flash_error'] ?? null;
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 unset($_SESSION['flash_error']);
@@ -28,7 +29,7 @@ $navItems = [
     <link rel="stylesheet" href="/assets/css/app.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
+<body class="<?= $isScreenshotMode ? 'screenshot-mode' : '' ?>">
     <?php if ($user): ?>
         <div class="mobile-nav-bar">
             <button class="menu-toggle" type="button" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false">
