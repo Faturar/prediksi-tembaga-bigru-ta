@@ -62,16 +62,28 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
 };
 ?>
 
+<?php if ($printMode): ?>
+<div class="print-mode-bar">
+    <a class="button-secondary" href="/reports?type=<?= e($activeType) ?>">Kembali</a>
+    <button class="full-width-button button-primary" type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+</div>
+<script>
+window.addEventListener('load', () => {
+    window.setTimeout(() => window.print(), 400);
+});
+</script>
+<?php else: ?>
 <div class="report-toolbar">
     <div class="report-switcher" aria-label="Jenis laporan">
         <?php foreach ($reportTypes as $type => $label): ?>
             <a class="<?= $activeType === $type ? 'active' : '' ?>" href="/reports?type=<?= e($type) ?>"><?= e($label) ?></a>
         <?php endforeach; ?>
     </div>
-    <button onclick="window.print()" class="full-width-button">Print Laporan</button>
+    <a class="full-width-button print-trigger" href="/reports?type=<?= e($activeType) ?><?= $filterSuffix ?>&print=1">Print Laporan</a>
 </div>
+<?php endif; ?>
 
-<?php if (in_array($activeType, ['dataset', 'prediction'], true)): ?>
+<?php if (!$printMode && in_array($activeType, ['dataset', 'prediction'], true)): ?>
 <?php
     $displayStart = !empty($filters['start_date']) ? date('d/m/Y', strtotime($filters['start_date'])) : '';
     $displayEnd = !empty($filters['end_date']) ? date('d/m/Y', strtotime($filters['end_date'])) : '';
@@ -148,12 +160,35 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
 </script>
 <?php endif; ?>
 
-<section class="panel report-document">
+<?php if ($printMode && $activeType === 'training'): ?>
+<style>@page{size:A4 landscape;margin:12mm 10mm;}</style>
+<?php endif; ?>
+<section class="panel report-document<?= ($printMode && $activeType === 'training') ? ' print-landscape' : '' ?>">
+    <?php if ($printMode): ?>
+    <div class="print-doc-header">
+        <div class="print-doc-brand">
+            <strong><?= e($appName) ?></strong>
+            <span><?= e($activeTitle) ?></span>
+        </div>
+        <div class="report-print-meta">
+            <span>Dicetak</span>
+            <strong><?= e($formatTanggalIndonesia(date('Y-m-d H:i:s'), true)) ?></strong>
+            <span>Oleh</span>
+            <strong><?= e($user['name'] ?? '-') ?></strong>
+            <?php if (!empty($filters['start_date']) || !empty($filters['end_date'])): ?>
+                <span>Periode</span>
+                <strong><?= e($formatTanggalIndonesia($filters['start_date'] ?? null)) ?> s/d <?= e($formatTanggalIndonesia($filters['end_date'] ?? null)) ?></strong>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
     <div class="report-title">
         <div>
             <h2><?= e($activeTitle) ?></h2>
             <?php if ($activeType === 'dataset'): ?>
                 <p>Periode data: <?= e($formatTanggalIndonesia($priceSummary['start_date'] ?? null)) ?> sampai <?= e($formatTanggalIndonesia($priceSummary['end_date'] ?? null)) ?></p>
+            <?php elseif ($activeType === 'training'): ?>
+                <p>Riwayat sesi training model BiGRU</p>
             <?php endif; ?>
         </div>
     </div>
@@ -191,7 +226,7 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
 
         <h3>Data Harga Terbaru</h3>
         <div class="table-wrap">
-            <?php $renderReportPagination($reportPagination, $activeType); ?>
+            <?php if (!$printMode): $renderReportPagination($reportPagination, $activeType); endif; ?>
             <table data-no-client-pagination="true">
                 <thead><tr><th>Tanggal</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Volume</th><th>Change %</th></tr></thead>
                 <tbody>
@@ -210,10 +245,19 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
             </table>
         </div>
     <?php elseif ($activeType === 'training'): ?>
+        <div class="report-summary-grid">
+            <div><span>Total Training</span><strong><?= e(number_format((float) ($trainingSummary['total_runs'] ?? 0), 0, ',', '.')) ?></strong><small>total sesi training</small></div>
+            <div><span>Model Aktif</span><strong><?= e($trainingSummary['active_version'] ?? '-') ?></strong><small>model terpilih</small></div>
+            <div><span>Berhasil</span><strong><?= e((int) ($trainingSummary['success_runs'] ?? 0)) ?></strong><small>status success</small></div>
+            <div><span>Gagal</span><strong><?= e((int) ($trainingSummary['failed_runs'] ?? 0)) ?></strong><small>status failed</small></div>
+            <div><span>Sedang Proses</span><strong><?= e((int) ($trainingSummary['running_runs'] ?? 0)) ?></strong><small>status running</small></div>
+            <div><span>Training Terakhir</span><strong><?= e($formatTanggalIndonesia($trainingSummary['last_trained_at'] ?? null, true)) ?></strong><small>waktu training selesai</small></div>
+        </div>
+
         <div class="table-wrap">
-            <?php $renderReportPagination($reportPagination, $activeType); ?>
+            <?php if (!$printMode): $renderReportPagination($reportPagination, $activeType); endif; ?>
             <table data-no-client-pagination="true">
-                <thead><tr><th>Version</th><th>Status</th><th>Aktif</th><th>Window</th><th>Units</th><th>Dropout</th><th>Batch</th><th>Epoch</th><th>Learning Rate</th><th>Trained</th></tr></thead>
+                <thead><tr><th>Version</th><th>Status</th><th>Aktif</th><th>Window</th><th>Units</th><th>Dropout</th><th>Batch</th><th>Epoch</th><th>Learning Rate</th><th>Train</th><th>Test</th><th>Loss</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>Durasi</th><th>Trained</th></tr></thead>
                 <tbody>
                 <?php foreach ($models as $row): ?>
                     <tr>
@@ -226,6 +270,13 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
                         <td data-label="Batch"><?= e($row['batch_size']) ?></td>
                         <td data-label="Epoch"><?= e($row['actual_epochs'] ?? $row['configured_epochs']) ?></td>
                         <td data-label="Learning Rate"><?= e($row['learning_rate']) ?></td>
+                        <td data-label="Train"><?= e($row['train_samples'] ?? '-') ?></td>
+                        <td data-label="Test"><?= e($row['test_samples'] ?? '-') ?></td>
+                        <td data-label="Loss"><?= $row['final_training_loss'] !== null ? e(number_format((float) $row['final_training_loss'], 4)) : '-' ?></td>
+                        <td data-label="MAE"><?= e($row['mae']) ?></td>
+                        <td data-label="RMSE"><?= e($row['rmse']) ?></td>
+                        <td data-label="MAPE"><?= e($row['mape']) ?></td>
+                        <td data-label="Durasi"><?= $row['training_duration_seconds'] !== null ? e(number_format((float) $row['training_duration_seconds'], 0, ',', '.')) . ' detik' : '-' ?></td>
                         <td data-label="Trained"><?= e($formatTanggalIndonesia($row['trained_at'] ?? null, true)) ?></td>
                     </tr>
                 <?php endforeach; ?>
@@ -234,7 +285,7 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
         </div>
     <?php elseif ($activeType === 'evaluation'): ?>
         <div class="table-wrap">
-            <?php $renderReportPagination($reportPagination, $activeType); ?>
+            <?php if (!$printMode): $renderReportPagination($reportPagination, $activeType); endif; ?>
             <table data-no-client-pagination="true">
                 <thead><tr><th>Version</th><th>Train</th><th>Test</th><th>Loss</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>Durasi</th></tr></thead>
                 <tbody>
@@ -255,7 +306,7 @@ $renderReportPagination = function (array $pagination, string $activeType) use (
         </div>
     <?php else: ?>
         <div class="table-wrap">
-            <?php $renderReportPagination($reportPagination, $activeType); ?>
+            <?php if (!$printMode): $renderReportPagination($reportPagination, $activeType); endif; ?>
             <table data-no-client-pagination="true">
                 <thead><tr><th>Model</th><th>Window</th><th>Input Awal</th><th>Input Akhir</th><th>Periode Prediksi</th><th>Prediksi Close</th><th>Dibuat</th></tr></thead>
                 <tbody>
